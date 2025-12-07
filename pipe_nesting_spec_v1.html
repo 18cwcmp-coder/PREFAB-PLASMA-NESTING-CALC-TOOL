@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Pipe Nesting, Traceability & Production Flow System – Specification v1</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin: 0;
+      padding: 24px;
+      line-height: 1.5;
+      background: #111;
+      color: #eee;
+    }
+    h1, h2, h3, h4 {
+      color: #ffd86b;
+      margin-top: 1.6em;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 0.2em;
+    }
+    h2 {
+      border-bottom: 1px solid #444;
+      padding-bottom: 0.2em;
+    }
+    a {
+      color: #7ec8ff;
+    }
+    code, pre {
+      font-family: "JetBrains Mono", "Fira Code", Menlo, Consolas, monospace;
+      background: #1b1b1b;
+      color: #e6f1ff;
+    }
+    pre {
+      padding: 12px;
+      border-radius: 4px;
+      overflow-x: auto;
+      border: 1px solid #333;
+    }
+    .tag {
+      display: inline-block;
+      padding: 2px 8px;
+      margin: 0 4px 4px 0;
+      border-radius: 999px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      background: #262626;
+      border: 1px solid #444;
+      color: #ccc;
+    }
+    table {
+      border-collapse: collapse;
+      margin: 12px 0;
+      width: 100%;
+      max-width: 100%;
+    }
+    th, td {
+      border: 1px solid #333;
+      padding: 6px 8px;
+      font-size: 13px;
+      vertical-align: top;
+    }
+    th {
+      background: #1b1b1b;
+    }
+    .pill {
+      display: inline-block;
+      padding: 2px 8px;
+      font-size: 11px;
+      border-radius: 999px;
+      background: #263238;
+      color: #cfd8dc;
+      margin-right: 6px;
+    }
+    .section-meta {
+      font-size: 12px;
+      color: #aaa;
+      margin-bottom: 16px;
+    }
+    .diagram-title {
+      font-size: 13px;
+      font-weight: 600;
+      margin-top: 16px;
+      margin-bottom: 4px;
+      color: #ffcc80;
+    }
+    ul {
+      margin-top: 0.4em;
+    }
+    li {
+      margin-bottom: 0.3em;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Pipe Nesting, Traceability &amp; Production Flow System</h1>
+<div class="section-meta">
+  Specification v1 – “Line in the Sand” &nbsp; | &nbsp; Drafted for: Robotic pipe cutting &amp; welding line with Panasonic robot
+</div>
+
+<span class="tag">Nesting</span>
+<span class="tag">Traceability</span>
+<span class="tag">Panasonic DTPS</span>
+<span class="tag">Multi-Project</span>
+<span class="tag">Material Segregation</span>
+
+<hr style="border-color:#333; margin:18px 0;" />
+
+<h2>1. Executive Summary</h2>
+
+<p>
+This document defines the specification for a system that plans and manages cutting and welding of pipework
+using 6&nbsp;m pipe stock lengths, a Panasonic robotic plasma cutting station, manual welding setters, final welders,
+and an optional paint booth. The system is intended to:
+</p>
+
+<ul>
+  <li>Optimise nesting of pipe pieces on 6&nbsp;m pipe stock lengths with a minimum <b>25&nbsp;mm gap</b> between pieces.</li>
+  <li>Support spool-based fabrication (e.g. spool <code>234</code> with branch pieces <code>234a–234e</code>).</li>
+  <li>Maintain strict <b>material segregation</b> between:
+    <ul>
+      <li>Carbon Steel – Schedule&nbsp;40</li>
+      <li>Stainless Steel – Schedule&nbsp;10</li>
+      <li>Hot Dip Galvanized pipe</li>
+      <li>Medium Grade Carbon Fire Pipe</li>
+    </ul>
+  </li>
+  <li>Provide full <b>material traceability</b> from pipe mill stamp &amp; heat number down to each cut piece and spool.</li>
+  <li>Coordinate production flow so that <b>welding setters and welders are never waiting for pipe</b>.</li>
+  <li>Generate a <b>forklift retrieval list</b> for pipe stock lengths required for the next cutting batch.</li>
+  <li>Handle <b>multiple projects concurrently</b> while respecting material and tooling constraints.</li>
+  <li>Export data to an existing <b>Pipe Tool calculator</b> that feeds directly into <b>DTPS</b> and the Panasonic robot.</li>
+  <li>Support an optional <b>paint booth routing</b> for selected spools or pieces.</li>
+</ul>
+
+<p>
+The system has two main faces:
+</p>
+<ul>
+  <li><b>Planner UI (desktop)</b> – used by drafting / planning to manage projects, pipe pieces, nesting, sequencing,
+      forklift lists and exports.</li>
+  <li><b>Factory Floor UI (mobile/tablet)</b> – used by operators to register pipe stock, capture pipe stamp photos,
+      and enter material trace details at the laydown or pipe bed.</li>
+</ul>
+
+<h2>2. Physical Production Context</h2>
+
+<p>
+The factory layout (simplified) for this system:
+</p>
+
+<div class="diagram-title">Figure 1 – High-Level Production Flow</div>
+<pre>
+[Rear of Factory]                                     [Towards Front]
+
+  Laydown Area  →  Pipe Bed / Rotator + Panasonic Robot  →  Post-Cut Routing:
+                                                                 • Roll Grooving
+                                                                 • Welding Setters (tack branches/flanges)
+                                                                 → Final Welding Station
+                                                                 → Paint Booth (optional)
+                                                                 → Dispatch
+</pre>
+
+<ul>
+  <li><b>Laydown Area</b> – where up to ~8 × 6&nbsp;m pipe stock lengths of a given size/material are loaded for a job.</li>
+  <li><b>Pipe Bed / Rotator</b> – feeds pipe stock through the Panasonic robot for:
+    <ul>
+      <li>Straight cuts to length.</li>
+      <li>Scalloped holes for branches.</li>
+    </ul>
+  </li>
+  <li><b>Downstream Stations</b>:
+    <ul>
+      <li><b>Roll grooving</b> – for certain pieces.</li>
+      <li><b>Welding setters</b> – manual tacking of branch pieces into scallops and attachment of flanges.</li>
+      <li><b>Final welding</b> – completes the welds on the assembled spools.</li>
+      <li><b>Paint booth</b> – optional surface treatment for selected pieces/spools.</li>
+    </ul>
+  </li>
+</ul>
+
+<p>
+The system must feed this line such that welding setters and welders receive full spools (main + branches) in a steady flow.
+</p>
+
+<h2>3. Material Families &amp; Segregation Rules</h2>
+
+<p>Four primary material families are supported:</p>
+
+<table>
+  <tr><th>Code</th><th>Description</th><th>Notes</th></tr>
+  <tr><td>CS_SCH40</td><td>Carbon Steel – Schedule 40</td><td>General carbon steel pipe, black or painted.</td></tr>
+  <tr><td>SS_SCH10</td><td>Stainless Steel – Schedule 10</td><td>Requires strict contamination control.</td></tr>
+  <tr><td>HDG</td><td>Hot Dip Galvanized Pipe</td><td>Galvanized surface, special handling.</td></tr>
+  <tr><td>CS_MED_FIRE</td><td>Medium Grade Carbon Fire Pipe</td><td>Common for fire systems (e.g., AS&nbsp;2419).</td></tr>
+</table>
+
+<p><b>Hard rules:</b></p>
+<ul>
+  <li>Nesting and cutting runs cannot mix different <b>Material_Family</b> values on the same pipe stock length.</li>
+  <li>Forklift retrieval, trace capture, nesting and sequencing are planned per material family to avoid
+      cross contamination of stainless and damage to tooling.</li>
+  <li>The system supports <b>tooling changeover flags</b> (future enhancement) when switching from one family
+      to another on the same line.</li>
+</ul>
+
+<h2>4. Spools, Sub-Spools &amp; Numbering</h2>
+
+<p>
+The fabrication unit is the <b>spool</b> – a complete fabricated assembly that may include multiple cut pieces:
+</p>
+
+<ul>
+  <li><b>Main spool piece</b> – e.g. spool <code>234</code>, the base pipe with scallops, end preps, etc.</li>
+  <li><b>Branch pieces (sub-spools)</b> – e.g. <code>234a</code>, <code>234b</code>, <code>234c</code>, etc., each representing
+      a branch or sub-component that is welded into the main spool.</li>
+</ul>
+
+<table>
+  <tr><th>Field</th><th>Example</th><th>Description</th></tr>
+  <tr><td>Spool_No</td><td>234</td><td>Root identifier for the full spool (assembly).</td></tr>
+  <tr><td>Spool_Sub_No</td><td>234c</td><td>Unique piece within the spool (main or branch).
+      Suffix letters (a–e, etc.) identify branches.</td></tr>
+  <tr><td>Is_Main_Spool</td><td>true / false</td><td>Flags the main piece (e.g. 234) vs. branch pieces (234a–e).</td></tr>
+</table>
+
+<p>
+All pieces with the same <code>Spool_No</code> are treated as a <b>family</b> for nesting, sequencing and welding flow.
+</p>
+
+<h2>5. Multi-Project Support</h2>
+
+<p>
+The system must support multiple projects running at the same time. Each project can have its own defaults, constraints
+and allowed material families.
+</p>
+
+<table>
+  <tr><th>Project Field</th><th>Description</th></tr>
+  <tr><td>Project_Code</td><td>Short ID (e.g. <code>DC-001</code>, <code>NWH-05</code>).</td></tr>
+  <tr><td>Project_Name</td><td>Long name for reporting.</td></tr>
+  <tr><td>Client</td><td>Optional client name.</td></tr>
+  <tr><td>Default_Stock_Length_mm</td><td>Usually 6000 mm, but configurable.</td></tr>
+  <tr><td>Allowed_Material_Families</td><td>Which of CS_SCH40 / SS_SCH10 / HDG / CS_MED_FIRE are used on this job.</td></tr>
+  <tr><td>Paint_Default</td><td>Whether most spools are expected to be painted; used as a default flag.</td></tr>
+  <tr><td>Cross_Project_Nesting_Allowed</td><td>Yes/No. Default No. If Yes, pieces from multiple projects may share
+      the same pipe stock length when same size &amp; material family.</td></tr>
+</table>
+
+<p>
+By default, nesting is performed per project, material family and pipe size to keep traceability simple and reporting clear.
+Cross-project nesting can be deliberately enabled later if needed.
+</p>
+
+<h2>6. Data Model Overview</h2>
+
+<h3>6.1 Core Entities</h3>
+
+<table>
+  <tr><th>Entity</th><th>Purpose</th></tr>
+  <tr>
+    <td>Project</td>
+    <td>Holds job-level settings, codes, defaults and constraints.</td>
+  </tr>
+  <tr>
+    <td>PipeStock</td>
+    <td>Represents a single physical pipe stock length (e.g. 6&nbsp;m), with material and trace data.</td>
+  </tr>
+  <tr>
+    <td>CutPiece</td>
+    <td>A required piece of pipe to be cut (straight or branch) belonging to a spool.</td>
+  </tr>
+  <tr>
+    <td>NestRun</td>
+    <td>A particular execution of nesting for a project/material/size, generating assignments of pieces to stock.</td>
+  </tr>
+  <tr>
+    <td>ForkliftBatch</td>
+    <td>A planned group of pipe stock lengths to retrieve for the next cutting batch.</td>
+  </tr>
+  <tr>
+    <td>RoutingInfo</td>
+    <td>Routing and station logic for each piece or spool (groove, setters, weld, paint).</td>
+  </tr>
+  <tr>
+    <td>TracePhoto</td>
+    <td>Photo records (e.g. of pipe stamp) linked to PipeStock.</td>
+  </tr>
+</table>
+
+<h3>6.2 PipeStock Fields</h3>
+
+<table>
+  <tr><th>Field</th><th>Example</th><th>Notes</th></tr>
+  <tr><td>Pipe_Stock_ID</td><td>DN100-CS-2025-001</td><td>Unique ID for this stock length.</td></tr>
+  <tr><td>Project_Code</td><td>DC-001</td><td>Optional – may be unallocated when first received.</td></tr>
+  <tr><td>Pipe_Size</td><td>DN100 SCH40</td><td>Nominal diameter plus schedule.</td></tr>
+  <tr><td>Material_Family</td><td>CS_SCH40</td><td>One of the four families.</td></tr>
+  <tr><td>Material_Spec</td><td>AS 1074</td><td>Standard / specification.</td></tr>
+  <tr><td>Material_Grade</td><td>Gr B</td><td>Grade (if applicable).</td></tr>
+  <tr><td>Stock_Length_mm</td><td>6000</td><td>Typically 6000 mm.</td></tr>
+  <tr><td>Heat_Number</td><td>H935274</td><td>From pipe stamp.</td></tr>
+  <tr><td>Batch_or_Coil</td><td>B48-27</td><td>Lot / coil / batch identifier.</td></tr>
+  <tr><td>Mill_Name</td><td>ABC Mill</td><td>Optional.</td></tr>
+  <tr><td>Mill_Cert_No</td><td>TC-2025-001234</td><td>Optional link to test certificate.</td></tr>
+  <tr><td>Stamped_Text</td><td>Full text from pipe stamp</td><td>Optional one-line capture.</td></tr>
+  <tr><td>Has_Trace_Photo</td><td>true/false</td><td>Indicates at least one stamp photo recorded.</td></tr>
+  <tr><td>Registered_By</td><td>Operator ID</td><td>Factory operator.</td></tr>
+  <tr><td>Registered_Timestamp</td><td>2025-12-02 08:41</td><td>When trace captured.</td></tr>
+</table>
+
+<h3>6.3 CutPiece Fields</h3>
+
+<table>
+  <tr><th>Field</th><th>Example</th><th>Description</th></tr>
+  <tr><td>Piece_ID</td><td>P-010</td><td>Internal unique ID (could be same as Spool_Sub_No).</td></tr>
+  <tr><td>Project_Code</td><td>DC-001</td><td>Owning project.</td></tr>
+  <tr><td>Spool_No</td><td>234</td><td>Main spool identifier.</td></tr>
+  <tr><td>Spool_Sub_No</td><td>234b</td><td>Specific piece within spool.</td></tr>
+  <tr><td>Is_Main_Spool</td><td>false</td><td>Branch if false, main if true.</td></tr>
+  <tr><td>Pipe_Size</td><td>DN50 SCH40</td><td>Size &amp; schedule of this piece.</td></tr>
+  <tr><td>Material_Family</td><td>CS_SCH40</td><td>Must match assigned PipeStock eventually.</td></tr>
+  <tr><td>Piece_Length_mm</td><td>300</td><td>Required finished length.</td></tr>
+  <tr><td>End_Prep_Start</td><td>Bevel</td><td>At the lower coordinate (Start_Position_mm).</td></tr>
+  <tr><td>End_Prep_End</td><td>Straight</td><td>At the higher coordinate (End_Position_mm).</td></tr>
+  <tr><td>Pipework_Type</td><td>Branch</td><td>Straight / Branch.</td></tr>
+  <tr><td>Requires_Grooving</td><td>false</td><td>Whether this piece must go to roll grooving.</td></tr>
+  <tr><td>Requires_Branch_Weld</td><td>true</td><td>Belongs to branch-to-scallop assembly.</td></tr>
+  <tr><td>Paint_Required</td><td>true</td><td>If it will go through paint booth.</td></tr>
+  <tr><td>Paint_System</td><td>Primer+Topcoat</td><td>Optional detail.</td></tr>
+  <tr><td>Date_Required</td><td>2026-03-15</td><td>Needed date for fabrication.</td></tr>
+  <tr><td>Current_Date</td><td>2025-12-02</td><td>Auto-populated when entry created.</td></tr>
+  <tr><td>Revision</td><td>B</td><td>Spool revision.</td></tr>
+  <tr><td>Weld_Priority</td><td>1</td><td>1–5 scale; drives sequencing.</td></tr>
+  <tr><td>Pipe_Stock_ID</td><td>DN100-CS-2025-001</td><td>Filled after nesting assigns this piece to a stock length.</td></tr>
+  <tr><td>Start_Position_mm</td><td>3235</td><td>Position on pipe stock where this piece starts.</td></tr>
+  <tr><td>End_Position_mm</td><td>3535</td><td>Position where this piece ends.</td></tr>
+  <tr><td>Nest_Run_ID</td><td>NEST-20251202-01</td><td>Which nesting run produced this assignment.</td></tr>
+  <tr><td>Cut_Sequence_No</td><td>11</td><td>Order the robot will cut this piece.</td></tr>
+  <tr><td>Next_Station</td><td>SETTER</td><td>Next logical station: GROOVE / SETTER / FINAL_WELD / PAINT / DISPATCH.</td></tr>
+</table>
+
+<h2>7. Workflow Overview</h2>
+
+<div class="diagram-title">Figure 2 – Overall Information &amp; Material Flow</div>
+<pre>
+1. Project Setup (Planner UI)
+   ↓
+2. Piece Entry / Import (Planner UI)
+   ↓
+3. Nesting + Sequencing (Planner UI)
+   ↓                 ↘
+4a. Forklift Retrieval List      4b. Nest Export to Pipe Tool / DTPS
+    (Floor)                         (File)
+   ↓
+5. Pipe Stock Retrieval & Laydown (Forklift)
+   ↓
+6. Pipe Stock Trace Capture – Heat / Stamp Photos (Factory UI)
+   ↓
+7. Robot Cutting Sequence (Pipe Stock Lengths processed)
+   ↓
+8. Post-Cut Routing:
+   • Grooving
+   • Welding Setters
+   • Final Weld
+   • Paint (optional)
+   ↓
+9. Dispatch / Installation
+</pre>
+
+<h2>8. Nesting Logic</h2>
+
+<h3>8.1 Grouping &amp; Constraints</h3>
+
+<p>
+Nesting is performed under the following grouping:
+</p>
+<pre>
+Group by: Project_Code → Material_Family → Pipe_Size
+</pre>
+
+<p>
+Within each group, we have a set of <b>CutPieces</b> to place on 6&nbsp;m pipe stock lengths (or other configured stock length).
+The system applies:
+</p>
+
+<ul>
+  <li><b>Minimum 25 mm gap</b> between adjacent pieces on the same pipe stock length.</li>
+  <li><b>End trims</b> at each end of pipe stock (e.g. Trim_mm = 10&nbsp;mm; configurable per project or material).</li>
+  <li><b>Kerf allowance</b> is considered inside the gap – for simplicity, the standard rule is:
+    <pre>
+Total_length = Sum(piece_lengths)
+             + (number_of_pieces - 1) * Gap_mm
+             + 2 * Trim_mm
+≤ Stock_Length_mm
+    </pre>
+  </li>
+</ul>
+
+<h3>8.2 Algorithm (Practical Starting Point)</h3>
+
+<p>
+A pragmatic algorithm is used first, with room for optimisation later:
+</p>
+
+<ol>
+  <li>Filter pieces for one Project / Material_Family / Pipe_Size.</li>
+  <li>Group pieces by <b>Spool_No</b>.</li>
+  <li>Within each group, identify main spool piece and sub-spools (branches).</li>
+  <li>Sort spools by:
+    <ol>
+      <li>Weld_Priority (1 highest)</li>
+      <li>Date_Required (earliest first)</li>
+      <li>Spool_No</li>
+    </ol>
+  </li>
+  <li>For each spool family, sort its pieces by:
+    <ul>
+      <li>Main spool piece first.</li>
+      <li>Branch pieces next (order optional; by length or suffix).</li>
+    </ul>
+  </li>
+  <li>Use a <b>greedy “best-fit decreasing”</b> strategy:
+    <ul>
+      <li>Iterate through sorted pieces, placing each into the first pipe stock length where it fits
+          while honouring the 25&nbsp;mm gaps and trims.</li>
+      <li>If a piece doesn’t fit on any existing stock, start a new pipe stock length.</li>
+    </ul>
+  </li>
+  <li>Record:
+    <ul>
+      <li>Pipe_Stock_ID used.</li>
+      <li>Start_Position_mm and End_Position_mm for each piece.</li>
+      <li>Drop length per pipe stock length (unused length).</li>
+    </ul>
+  </li>
+</ol>
+
+<div class="diagram-title">Figure 3 – Nesting Logic (Concept)</div>
+<pre>
+[Input Pieces]
+   ↓ group by Project/Material/Size
+[Grouped Pieces]
+   ↓ sort by Spool & Priority
+[Sorted Pieces]
+   ↓ place onto pipe stock lengths
+[Nesting Result with positions & drops]
+</pre>
+
+<h2>9. Sequencing Logic</h2>
+
+<p>
+Sequencing determines the order in which pipe stock lengths and individual pieces are processed by the robot to support
+welders and setters.
+</p>
+
+<h3>9.1 Goals</h3>
+<ul>
+  <li>Ensure complete spools (main + branches) exit the line in a tight time window.</li>
+  <li>Prioritise urgent spools and jobs based on Weld_Priority and Date_Required.</li>
+  <li>Minimise changeovers and idle time at downstream stations.</li>
+</ul>
+
+<h3>9.2 Piece-Level Sequence</h3>
+
+<p>
+For each group (Project / Material_Family / Pipe_Size):
+</p>
+
+<ol>
+  <li>Sort spools by:
+    <ol>
+      <li>Weld_Priority</li>
+      <li>Date_Required</li>
+      <li>Spool_No</li>
+    </ol>
+  </li>
+  <li>Within each spool:
+    <ul>
+      <li>Cut main spool piece first (e.g. 234).</li>
+      <li>Then cut all associated branches (234a–234e).</li>
+    </ul>
+  </li>
+  <li>Assign <b>Cut_Sequence_No</b> sequentially based on the order of pieces.</li>
+</ol>
+
+<p>
+The export respects Cut_Sequence_No so that the Panasonic robot program processes pieces in the intended order.
+</p>
+
+<h2>10. Material Traceability</h2>
+
+<p>
+Material traceability ensures that each cut piece and spool can be linked back to its originating pipe stock length, heat number,
+batch and photos of the mill stamp.
+</p>
+
+<h3>10.1 Factory Floor Capture (Mobile UI)</h3>
+
+<p>
+When a pipe stock length is moved to laydown or the pipe bed:
+</p>
+
+<ol>
+  <li>Operator opens <b>Factory Floor app</b> on a phone/tablet.</li>
+  <li>Selects or scans <b>Pipe_Stock_ID</b> (e.g. from a printed label or on-screen list).</li>
+  <li>Takes one or more photos of the pipe stamp (<b>TracePhoto</b> records).</li>
+  <li>Enters:
+    <ul>
+      <li>Heat_Number</li>
+      <li>Material_Grade / Standard (if not pre-populated)</li>
+      <li>Batch or coil number</li>
+    </ul>
+  </li>
+  <li>Saves the record. PipeStock is now traceable.</li>
+</ol>
+
+<p>
+The system may optionally enforce: <b>“No cutting allowed unless PipeStock has trace data recorded.”</b>
+</p>
+
+<h3>10.2 Inheritance to Cut Pieces</h3>
+
+<p>
+When nesting assigns a CutPiece to a PipeStock:
+</p>
+
+<ul>
+  <li>CutPiece inherits:
+    <ul>
+      <li>Pipe_Stock_ID</li>
+      <li>Heat_Number</li>
+      <li>Batch</li>
+      <li>Material_Spec / Grade</li>
+      <li>Has_Trace_Photo (for QA audit)</li>
+    </ul>
+  </li>
+  <li>This information flows into export files and downstream production management systems, where time stamps,
+      welding details, and operator data are added.</li>
+</ul>
+
+<h2>11. Forklift Retrieval List</h2>
+
+<p>
+A Forklift Retrieval List is generated for the next batch of cutting based on selected spools and nesting results.
+</p>
+
+<h3>11.1 Inputs</h3>
+<ul>
+  <li>Selected set of spools (e.g. all Weld_Priority = 1 for a given project and material family).</li>
+  <li>Pieces belonging to those spools.</li>
+  <li>Stock lengths required to nest those pieces.</li>
+</ul>
+
+<h3>11.2 Output Format (Example)</h3>
+
+<p><b>Header</b></p>
+<ul>
+  <li>Date</li>
+  <li>Project_Code</li>
+  <li>Material_Family</li>
+  <li>List of spools in batch (e.g. 234, 235, 236)</li>
+</ul>
+
+<p><b>Stock Requirements</b></p>
+
+<table>
+  <tr><th>Qty</th><th>Stock Length</th><th>Pipe Size</th><th>Material Family</th><th>Destination</th></tr>
+  <tr><td>2</td><td>6&nbsp;m</td><td>DN100 SCH40</td><td>CS_SCH40</td><td>Robot Cutting Station</td></tr>
+  <tr><td>1</td><td>6&nbsp;m</td><td>DN50 SCH40</td><td>CS_SCH40</td><td>Robot Cutting Station</td></tr>
+</table>
+
+<p><b>Optional traceability view</b> listing which spools/pieces this batch is expected to produce.</p>
+
+<h2>12. Paint Routing</h2>
+
+<p>
+Paint routing is controlled per piece/spool:
+</p>
+
+<ul>
+  <li><code>Paint_Required</code> – Yes/No.</li>
+  <li><code>Paint_System</code>, <code>Paint_Colour</code> – optional details.</li>
+</ul>
+
+<p>
+Routing then becomes:
+</p>
+
+<pre>
+CUT
+ → (optional GROOVE)
+ → SETTER
+ → FINAL_WELD
+ → (if Paint_Required then PAINT else DISPATCH)
+</pre>
+
+<p>
+Reports can be generated to show “Spools awaiting paint” and paint workload per day/week.
+</p>
+
+<h2>13. User Interfaces</h2>
+
+<h3>13.1 Planner UI (Desktop)</h3>
+
+<p>Key screens:</p>
+
+<ul>
+  <li><b>Project &amp; Material Setup</b>
+    <ul>
+      <li>Create/edit projects and configure default stock length, allowed material families, paint defaults.</li>
+    </ul>
+  </li>
+  <li><b>Piece Entry / Import</b>
+    <ul>
+      <li>Grid where user can enter: Spool_No, Spool_Sub_No, Pipe_Size, Piece_Length_mm, End preps, Pipework_Type,
+          Material_Family, Date_Required, Weld_Priority, Paint flags etc.</li>
+      <li>Support for copy/paste from Excel and CSV import.</li>
+    </ul>
+  </li>
+  <li><b>Nesting &amp; Sequencing</b>
+    <ul>
+      <li>Run nesting for selected Project / Material_Family / Pipe_Size.</li>
+      <li>Display each pipe stock length with graphical representation of pieces and 25&nbsp;mm gaps.</li>
+      <li>Show drop per pipe stock length and total utilisation.</li>
+    </ul>
+  </li>
+  <li><b>Forklift Retrieval</b>
+    <ul>
+      <li>Choose which spools / nesting batches to prepare.</li>
+      <li>Generate and print forklift retrieval lists.</li>
+    </ul>
+  </li>
+  <li><b>Exports</b>
+    <ul>
+      <li>Generate CSV/Excel files for Pipe Tool / DTPS with all fields required.</li>
+    </ul>
+  </li>
+</ul>
+
+<h3>13.2 Factory Floor UI (Mobile/Tablet)</h3>
+
+<p>Key screens:</p>
+<ul>
+  <li><b>Register Pipe Stock</b>
+    <ul>
+      <li>Select Project (optional) and Material_Family.</li>
+      <li>Auto-generate or scan Pipe_Stock_ID.</li>
+      <li>Capture photos of stamp via camera.</li>
+      <li>Enter Heat_Number, Batch, etc.</li>
+    </ul>
+  </li>
+  <li><b>Today’s Pipe Stock</b>
+    <ul>
+      <li>List of stock lengths awaiting cutting, with indicators showing trace completion.</li>
+    </ul>
+  </li>
+</ul>
+
+<h2>14. Export Formats &amp; Integration</h2>
+
+<p>
+The system produces one or more export files that are read by the existing Pipe Tool calculator and then by DTPS.
+</p>
+
+<h3>14.1 Example Export Columns</h3>
+
+<table>
+  <tr><th>Column</th><th>Description</th></tr>
+  <tr><td>Nest_Run_ID</td><td>Identifies which nesting run produced this record.</td></tr>
+  <tr><td>Project_Code</td><td>Project identifier.</td></tr>
+  <tr><td>Pipe_Stock_ID</td><td>Stock length ID.</td></tr>
+  <tr><td>Stock_Sequence_No</td><td>Order that stock lengths are processed.</td></tr>
+  <tr><td>Spool_No</td><td>Main spool number.</td></tr>
+  <tr><td>Spool_Sub_No</td><td>Piece-level spool number (with suffix).</td></tr>
+  <tr><td>Is_Main_Spool</td><td>true/false.</td></tr>
+  <tr><td>Pipe_Size</td><td>Nominal size &amp; schedule.</td></tr>
+  <tr><td>Piece_Length_mm</td><td>Finished length.</td></tr>
+  <tr><td>Start_Position_mm</td><td>Start coordinate on pipe stock.</td></tr>
+  <tr><td>End_Position_mm</td><td>End coordinate on pipe stock.</td></tr>
+  <tr><td>Gap_After_mm</td><td>Gap following this piece (if any).</td></tr>
+  <tr><td>End_Prep_Start</td><td>Start end prep type.</td></tr>
+  <tr><td>End_Prep_End</td><td>End prep type.</td></tr>
+  <tr><td>Material_Family</td><td>CS_SCH40, SS_SCH10, etc.</td></tr>
+  <tr><td>Heat_Number</td><td>Inherited from PipeStock.</td></tr>
+  <tr><td>Batch_or_Coil</td><td>Inherited from PipeStock.</td></tr>
+  <tr><td>Cut_Sequence_No</td><td>Order of cuts for robot.</td></tr>
+  <tr><td>Next_Station</td><td>Groove / Setter / Final_Weld / Paint / Dispatch.</td></tr>
+</table>
+
+<h2>15. Implementation Phases (High-Level)</h2>
+
+<ol>
+  <li><b>Phase 1 – Nesting &amp; Forklift Lists</b>
+    <ul>
+      <li>Implement data model for Project, CutPiece, NestRun, ForkliftBatch.</li>
+      <li>Create Planner UI for piece entry, nesting, sequencing and forklift list generation.</li>
+      <li>Implement export file to Pipe Tool without material trace fields (stub for now).</li>
+    </ul>
+  </li>
+  <li><b>Phase 2 – Material Traceability App</b>
+    <ul>
+      <li>Implement PipeStock and TracePhoto entities.</li>
+      <li>Develop mobile Factory Floor UI for registering stock and capturing stamp photos.</li>
+      <li>Enforce “no cutting without trace data” rule if desired.</li>
+    </ul>
+  </li>
+  <li><b>Phase 3 – Paint Routing &amp; Dashboards</b>
+    <ul>
+      <li>Add paint routing fields and logic.</li>
+      <li>Implement dashboards showing work-in-progress: cutting, welding, paint, dispatch.</li>
+    </ul>
+  </li>
+  <li><b>Phase 4 – Deeper DTPS Integration</b>
+    <ul>
+      <li>Automate file transfer and mapping into DTPS.</li>
+      <li>Optionally read back weld time stamps / arc data for full digital asset records.</li>
+    </ul>
+  </li>
+</ol>
+
+<h2>16. Conclusion</h2>
+
+<p>
+This HTML document forms the baseline “line in the sand” specification for the pipe nesting, traceability and production
+flow system. It captures:
+</p>
+
+<ul>
+  <li>Production context and flow.</li>
+  <li>Material families and segregation requirements.</li>
+  <li>Spool and sub-spool structure.</li>
+  <li>Data model for pipe stock, cut pieces and projects.</li>
+  <li>Nesting and sequencing algorithms.</li>
+  <li>Material traceability workflow including stamp photos.</li>
+  <li>Forklift retrieval list requirements.</li>
+  <li>Paint routing, multi-project handling, and exports to existing tools.</li>
+</ul>
+
+<p>
+This document can now be handed to developers, integrators, and stakeholders as the reference for designing and
+implementing the actual application (web, desktop, or hybrid) and for planning integration with Panasonic DTPS.
+</p>
+
+</body>
+</html>
