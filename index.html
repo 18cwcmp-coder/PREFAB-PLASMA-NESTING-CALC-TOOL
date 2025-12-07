@@ -1,0 +1,3730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Pipe Nesting Planner — Prototype v29</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      color-scheme: dark;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #101012;
+      color: #f5f5f5;
+    }
+    header {
+      padding: 16px 20px;
+      border-bottom: 1px solid #2a2a2a;
+      background: #151518;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-logo {
+      height: 72px;
+      width: auto;
+      background: transparent;
+      padding: 0;
+      border-radius: 0;
+    }
+    .brand-text h1 {
+      margin: 0;
+      font-size: 18px;
+    }
+    .brand-text small {
+      color: #aaa;
+    }
+    main {
+      padding: 16px;
+      max-width: 1300px;
+      margin: 0 auto;
+    }
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .tab-btn {
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid #333;
+      background: #1b1b1f;
+      color: #ddd;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .tab-btn.active {
+      background: #ffd86b;
+      color: #111;
+      border-color: #ffd86b;
+    }
+    .mode-btn {
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid #333;
+      background: #1b1b1f;
+      color: #ddd;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .mode-btn.active {
+      background: #444;
+      color: #ffd86b;
+      border-color: #ffd86b;
+    }
+    .card {
+      background: #18181c;
+      border-radius: 12px;
+      border: 1px solid #26262b;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    h2 {
+      font-size: 18px;
+      margin-top: 0;
+    }
+    h3 {
+      font-size: 15px;
+      margin-top: 0;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px 16px;
+    }
+    label {
+      font-size: 12px;
+      color: #ccc;
+      display: block;
+      margin-bottom: 2px;
+    }
+    input[type="text"],
+    input[type="number"],
+    input[type="date"],
+    select {
+      width: 100%;
+      padding: 6px 8px;
+      border-radius: 6px;
+      border: 1px solid #333;
+      background: #101015;
+      color: #f5f5f5;
+      font-size: 13px;
+    }
+    input[type="checkbox"] {
+      transform: scale(1.05);
+      margin-right: 4px;
+    }
+    .field-inline {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: #ddd;
+    }
+    button.primary {
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: none;
+      background: #ffd86b;
+      color: #111;
+      font-size: 13px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    button.secondary {
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid #333;
+      background: transparent;
+      color: #ddd;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    button.primary:disabled,
+    button.secondary:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      margin-top: 8px;
+    }
+    th, td {
+      border: 1px solid #26262b;
+      padding: 4px 6px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background: #202028;
+    }
+    .tag {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: #26262b;
+      font-size: 11px;
+      margin-right: 4px;
+    }
+    .row-editing {
+      background: #303043 !important;
+      outline: 1px solid #ffd86b;
+    }
+    .btn-row-delete {
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid #444;
+      background: #2a1b1b;
+      color: #ffb3b3;
+      font-size: 11px;
+      cursor: pointer;
+    }
+    .danger {
+      color: #ff8a80;
+      font-size: 12px;
+      margin-top: 4px;
+    }
+    .pill {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid #444;
+      font-size: 11px;
+      margin-right: 6px;
+      margin-bottom: 4px;
+      color: #ccc;
+    }
+    .nest-bar {
+      height: 14px;
+      border-radius: 7px;
+      background: #222;
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 4px;
+    }
+    .nest-segment {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 2px;
+      border-right: 1px solid rgba(0,0,0,0.4);
+      opacity: 0.9;
+      font-size: 10px;
+      font-weight: 600;
+      color: #000;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      pointer-events: none;
+    }
+    .nest-segment.branch {
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.35);
+    }
+    .nest-segment.threaded {
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,0.4);
+    }
+    .nest-label {
+      font-size: 11px;
+      color: #aaa;
+    }
+  
+    .spool-image-row {
+      margin-top: 16px;
+      display: grid;
+      grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+      gap: 16px;
+      align-items: flex-start;
+    }
+    .spool-image-controls label {
+      display: block;
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+    #spool-image-file {
+      display: block;
+      margin-bottom: 6px;
+    }
+    .spool-image-paste {
+      border: 1px dashed #555;
+      border-radius: 6px;
+      padding: 6px 8px;
+      font-size: 12px;
+      color: #bbb;
+      min-height: 40px;
+      cursor: text;
+    }
+    .spool-image-paste:focus {
+      outline: none;
+      border-color: #ffc857;
+      box-shadow: 0 0 0 1px #ffc85755;
+    }
+    .spool-image-hint {
+      font-size: 11px;
+      color: #888;
+      margin-top: 6px;
+    }
+    .spool-image-preview {
+      display: flex;
+      justify-content: flex-end;
+    }
+    .spool-image-frame {
+      width: 190px;
+      height: 220px;
+      border-radius: 6px;
+      border: 1px solid #333;
+      background: #111;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+    #spool-image-preview-img {
+      max-width: 100%;
+      max-height: 100%;
+      display: none;
+    }
+    #spool-image-empty {
+      font-size: 11px;
+      color: #666;
+      text-align: center;
+      padding: 4px;
+    }
+    .secondary.small {
+      padding: 4px 8px;
+      font-size: 11px;
+    }
+    .piece-filters .filter-input {
+      width: 100%;
+      box-sizing: border-box;
+      background: #111;
+      border: 1px solid #333;
+      border-radius: 4px;
+      padding: 2px 4px;
+      color: #eee;
+      font-size: 11px;
+    }
+    .piece-filters .filter-input::placeholder {
+      color: #555;
+    }
+    
+    /* Image modal styles */
+    .image-modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.9);
+      cursor: pointer;
+    }
+    .image-modal.active {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .image-modal img {
+      max-width: 90%;
+      max-height: 90%;
+      object-fit: contain;
+    }
+    .image-modal-close {
+      position: absolute;
+      top: 20px;
+      right: 35px;
+      color: #f1f1f1;
+      font-size: 40px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .image-modal-close:hover {
+      color: #bbb;
+    }
+    #spool-image-preview-img {
+      cursor: pointer;
+    }
+    #spool-image-preview-img:hover {
+      opacity: 0.8;
+    }
+    .branch-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 10px;
+      margin-bottom: 4px;
+      background: #26262b;
+      border-radius: 4px;
+      border: 1px solid #333;
+    }
+    .branch-item-info {
+      flex: 1;
+      font-size: 12px;
+      color: #ddd;
+    }
+    .branch-item-delete {
+      padding: 2px 8px;
+      border-radius: 4px;
+      border: 1px solid #444;
+      background: #2a1b1b;
+      color: #ffb3b3;
+      font-size: 11px;
+      cursor: pointer;
+    }
+    .branch-item-delete:hover {
+      background: #3a1b1b;
+    }
+    
+    /* DTPS Visual Nesting Bar Styles - Template Style */
+    .dtps-nest-visual {
+      margin: 16px 0;
+      padding: 20px;
+      background: #fff;
+      border-radius: 0;
+      border: 2px solid #000;
+      font-family: Arial, sans-serif;
+    }
+    .dtps-track-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px;
+      background: #fff;
+      border: 2px solid #000;
+      border-radius: 0;
+      font-size: 16px;
+      font-weight: bold;
+      color: #000;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 20px;
+    }
+    .dtps-pipe-layout {
+      position: relative;
+      display: flex;
+      align-items: stretch;
+      background: #fff;
+      border: 2px solid #000;
+      min-height: 150px;
+      margin-bottom: 20px;
+    }
+    .dtps-chuck-rotator {
+      display: flex;
+      flex-direction: column;
+      border-right: 2px solid #000;
+      background: #fff;
+      width: 100px;
+    }
+    .dtps-chuck-rotator-label {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+      font-size: 12px;
+      font-weight: bold;
+      color: #000;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+    }
+    .dtps-offcut-section {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      background: #ffffff;
+      border-right: 2px solid #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1;
+    }
+    .dtps-offcut-label {
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      font-size: 10px;
+      font-weight: bold;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .dtps-pipe-bar {
+      flex: 1;
+      position: relative;
+      background: #f5f5f5;
+      overflow: visible;
+    }
+    .dtps-pipe-segment {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-right: 2px solid #000;
+      opacity: 0.85;
+      font-size: 11px;
+      font-weight: bold;
+      color: #000;
+      transition: opacity 0.2s;
+    }
+    .dtps-pipe-segment:hover {
+      opacity: 1;
+      box-shadow: inset 0 0 0 3px rgba(0,0,0,0.4);
+    }
+    .dtps-segment-label {
+      font-size: 12px;
+      font-weight: bold;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      max-width: 95%;
+      text-shadow: 1px 1px 0px rgba(255,255,255,0.7);
+    }
+    .dtps-segment-type {
+      font-size: 9px;
+      opacity: 0.9;
+      text-transform: uppercase;
+      text-shadow: 1px 1px 0px rgba(255,255,255,0.7);
+    }
+    .dtps-hole-marker {
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      background: #000;
+      border: 2px solid #fff;
+      border-radius: 50%;
+      transform: translateX(-50%);
+      top: 50%;
+      margin-top: -8px;
+      z-index: 10;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.6);
+    }
+    .dtps-partoff-marker {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: repeating-linear-gradient(
+        45deg,
+        #ff0000,
+        #ff0000 6px,
+        #fff 6px,
+        #fff 12px
+      );
+      transform: translateX(-1.5px);
+      z-index: 5;
+      border-left: 1px solid #000;
+      border-right: 1px solid #000;
+    }
+    .dtps-partoff-label {
+      position: absolute;
+      top: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 9px;
+      font-weight: bold;
+      color: #ff0000;
+      white-space: nowrap;
+      background: #fff;
+      padding: 2px 4px;
+      border: 1px solid #ff0000;
+    }
+    .dtps-pipe-end-label {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 11px;
+      color: #000;
+      font-weight: bold;
+      text-transform: uppercase;
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      letter-spacing: 1px;
+    }
+    .dtps-nest-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 20px;
+      background: #fff;
+      border: 2px solid #000;
+      border-radius: 0;
+      font-size: 12px;
+      color: #000;
+      font-weight: bold;
+    }
+    .dtps-nest-info-left {
+      display: flex;
+      gap: 30px;
+    }
+    .dtps-nest-info-right {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+    }
+    .dtps-export-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .dtps-export-status.exported {
+      background: #4CAF50;
+      color: #fff;
+      border: 2px solid #2E7D32;
+    }
+    .dtps-export-status.not-exported {
+      background: #FFF59D;
+      color: #000;
+      border: 2px solid #FBC02D;
+    }
+    .dtps-export-checkmark {
+      font-size: 14px;
+      font-weight: bold;
+    }
+    
+    /* Piece Detail Modal */
+    .dtps-modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+    .dtps-modal {
+      background: #fff;
+      border: 3px solid #000;
+      border-radius: 0;
+      padding: 30px;
+      max-width: 600px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    .dtps-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid #000;
+    }
+    .dtps-modal-title {
+      font-size: 24px;
+      font-weight: bold;
+      color: #000;
+      text-transform: uppercase;
+    }
+    .dtps-modal-close {
+      background: #000;
+      color: #fff;
+      border: none;
+      padding: 8px 16px;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      border-radius: 0;
+    }
+    .dtps-modal-close:hover {
+      background: #333;
+    }
+    .dtps-modal-content {
+      font-size: 14px;
+      color: #000;
+    }
+    .dtps-detail-row {
+      display: flex;
+      padding: 10px 0;
+      border-bottom: 1px solid #ddd;
+    }
+    .dtps-detail-label {
+      font-weight: bold;
+      min-width: 180px;
+      color: #333;
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.5px;
+    }
+    .dtps-detail-value {
+      flex: 1;
+      color: #000;
+      font-size: 16px;
+      font-weight: 600;
+    }
+</style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <img src="data:image/jpeg;base64,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" alt="Prefab Engineering" class="brand-logo" />
+      <div class="brand-text">
+        <h1>Pipe Nesting Planner — Prototype v29</h1>
+        <small>Prefab Engineering Â· Projects, piece entry, nesting & offcut optimisation (local only, no backend yet)</small>
+      </div>
+    </div>
+  </header>
+  <main>
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="projects">Project Setup</button>
+      <button class="tab-btn" data-tab="pieces">Cut Piece Entry</button>
+      <button class="tab-btn" data-tab="nesting">Nesting</button>
+      <button class="tab-btn" data-tab="dtps">DTPS / Steel Cut</button>
+      <button class="tab-btn" data-tab="data">Data View / Export</button>
+    </div>
+
+    <!-- PROJECTS TAB -->
+    <section id="tab-projects" class="card">
+      <h2>Project Setup</h2>
+      <p style="font-size:13px;color:#ccc;">
+        Define high-level project settings. Stock length drives the nesting engine.
+        Data is stored locally in your browser.
+      </p>
+      <div class="grid">
+        <div>
+          <label for="proj-code">Project Code</label>
+          <input id="proj-code" type="text" placeholder="e.g. 33567PSA" />
+        </div>
+        <div>
+          <label for="proj-name">Project Name</label>
+          <input id="proj-name" type="text" placeholder="Y7 Apartments" />
+        </div>
+        <div>
+          <label for="proj-stock">Default Stock Length (mm)</label>
+          <input id="proj-stock" type="number" value="6000" min="1000" step="100" />
+        </div>
+        <div>
+          <label for="proj-client">Client (optional)</label>
+          <input id="proj-client" type="text" />
+        </div>
+      </div>
+
+      <h3 style="margin-top:18px;">Material Families</h3>
+      <div class="grid">
+        <div class="field-inline">
+          <input type="checkbox" id="mf-cs40" />
+          <label for="mf-cs40">Carbon Steel SCH40</label>
+        </div>
+        <div class="field-inline">
+          <input type="checkbox" id="mf-ss10" />
+          <label for="mf-ss10">Stainless Steel SCH10</label>
+        </div>
+        <div class="field-inline">
+          <input type="checkbox" id="mf-hdg" />
+          <label for="mf-hdg">Hot Dip Galv</label>
+        </div>
+        <div class="field-inline">
+          <input type="checkbox" id="mf-fire" />
+          <label for="mf-fire">Medium Grade Fire Pipe</label>
+        </div>
+      </div>
+
+      <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="primary" id="btn-add-project">Save Project</button>
+        <button class="secondary" id="btn-clear-project-form" type="button">Clear Form</button>
+      </div>
+      <div id="proj-error" class="danger" style="display:none;"></div>
+
+      <h3 style="margin-top:22px;">Saved Projects</h3>
+      <div id="proj-empty" style="font-size:12px;color:#888;">No projects yet. Add one above.</div>
+      <table id="proj-table" style="display:none;">
+        <thead>
+          <tr>
+            <th>Code</th>
+            <th>Name</th>
+            <th>Client</th>
+            <th>Stock Length (mm)</th>
+            <th>Materials</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <!-- PIECES TAB -->
+    <section id="tab-pieces" class="card" style="display:none;">
+      <h2>Cut Piece Entry</h2>
+      <p style="font-size:13px;color:#ccc;">
+        Enter spool pieces (main + branches + threaded sockets). Quantity creates SP-001(1), SP-001(2)â€¦  
+        These records drive nesting, forklift list & DTPS export.
+      </p>
+
+      <div class="grid">
+        <div>
+          <label for="piece-project">Project</label>
+          <select id="piece-project">
+            <option value="">Select a projectâ€¦</option>
+          </select>
+        </div>
+        <div>
+          <label for="piece-spool">Spool No. (base)</label>
+          <input id="piece-spool" type="text" placeholder="e.g. SP-001" />
+        </div>
+        <div>
+          <label for="piece-subspool">Spool Sub No. (base)</label>
+          <input id="piece-subspool" type="text" placeholder="e.g. NA or A" />
+        </div>
+        <div>
+          <label for="piece-drawing">Ref. Drawing No.</label>
+          <input id="piece-drawing" type="text" placeholder="e.g. VMM00107-RI-SP-01 [1]" />
+        </div>
+        <div>
+          <label for="piece-length">Piece Length (mm)</label>
+          <input id="piece-length" type="number" min="1" />
+        </div>
+        <div>
+          <label for="piece-qty">Quantity</label>
+          <input id="piece-qty" type="number" min="1" value="1" />
+        </div>
+        <div>
+          <label for="piece-size">Pipe Size</label>
+          <select id="piece-size">
+            <option value="">Select sizeâ€¦</option>
+            <option value="DN25">DN25</option>
+            <option value="DN32">DN32</option>
+            <option value="DN40">DN40</option>
+            <option value="DN50">DN50</option>
+            <option value="DN65">DN65</option>
+            <option value="DN80">DN80</option>
+            <option value="DN100">DN100</option>
+            <option value="DN125">DN125</option>
+            <option value="DN150">DN150</option>
+            <option value="DN200">DN200</option>
+            <option value="DN250">DN250</option>
+            <option value="DN300">DN300</option>
+            <option value="DN350">DN350</option>
+            <option value="DN400">DN400</option>
+            <option value="DN450">DN450</option>
+            <option value="DN500">DN500</option>
+            <option value="DN600">DN600</option>
+          </select>
+        </div>
+        <div>
+          <label for="piece-material">Material Family</label>
+          <select id="piece-material">
+            <option value="">Selectâ€¦</option>
+            <option value="CS_SCH40">CS_SCH40 (Carbon SCH40)</option>
+            <option value="SS_SCH10">SS_SCH10 (Stainless SCH10)</option>
+            <option value="HDG">HDG (Hot Dip Galv)</option>
+            <option value="CS_MED_FIRE">CS_MED_FIRE (Fire Pipe)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid" style="margin-top:10px;">
+        <div class="field-inline">
+          <input type="checkbox" id="piece-main" />
+          <label for="piece-main">Main spool piece (not branch)</label>
+        </div>
+        <div>
+          <label for="piece-type">Pipework Type</label>
+          <select id="piece-type" onchange="toggleBranchFields()">
+            <option value="Straight">Straight</option>
+            <option value="Branch">Branch</option>
+            <option value="ThreadedSocket">Threaded Socket</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Multi-Branch Section -->
+      <div id="branch-connections-section" style="display:none;margin-top:16px;padding:16px;background:#1b1b1f;border-radius:8px;border:1px solid #333;">
+        <h3 style="font-size:14px;margin-top:0;margin-bottom:12px;">Branch Connections (for main spool piece)</h3>
+        
+        <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));">
+          <div>
+            <label for="branch-distance">Distance (mm)</label>
+            <input type="number" id="branch-distance" min="0" placeholder="e.g. 245" />
+          </div>
+          <div>
+            <label for="branch-size">Branch Size</label>
+            <select id="branch-size">
+              <option value="">Select…</option>
+              <option value="DN25">DN25</option>
+              <option value="DN32">DN32</option>
+              <option value="DN40">DN40</option>
+              <option value="DN50">DN50</option>
+              <option value="DN65">DN65</option>
+              <option value="DN80">DN80</option>
+              <option value="DN90">DN90</option>
+              <option value="DN100">DN100</option>
+              <option value="DN125">DN125</option>
+              <option value="DN150">DN150</option>
+              <option value="DN200">DN200</option>
+              <option value="DN250">DN250</option>
+              <option value="DN300">DN300</option>
+            </select>
+          </div>
+          <div>
+            <label for="branch-angle-preset">Angle</label>
+            <select id="branch-angle-preset">
+              <option value="0">0° (top)</option>
+              <option value="90">90° (right)</option>
+              <option value="180">180° (bottom)</option>
+              <option value="270">270° (left)</option>
+              <option value="custom">Custom angle…</option>
+            </select>
+          </div>
+          <div id="branch-angle-custom-group" style="display:none;">
+            <label for="branch-angle-custom">Custom Angle (°)</label>
+            <input type="number" id="branch-angle-custom" min="0" max="360" placeholder="0-360" />
+          </div>
+        </div>
+
+        <div style="margin-top:12px;">
+          <button type="button" class="primary" id="btn-add-branch">Add Branch</button>
+          <span style="font-size:11px;color:#888;margin-left:8px;">All distances measured from same end</span>
+        </div>
+
+        <div id="branch-list-container" style="margin-top:16px;">
+          <div style="font-size:12px;color:#aaa;margin-bottom:6px;">Current Branches:</div>
+          <div id="branch-list" style="font-size:12px;">
+            <div style="color:#666;font-style:italic;">No branches added yet</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid" style="margin-top:10px;">
+        <div>
+          <label for="piece-end-start">End Prep (Start)</label>
+          <select id="piece-end-start">
+            <option value="Straight">Straight</option>
+            <option value="Bevel">Bevel</option>
+            <option value="RollGroove">Roll Groove</option>
+            <option value="Scallop">Scallop</option>
+            <option value="Flange_E">Flange (Table E)</option>
+            <option value="Flange_D">Flange (Table D)</option>
+            <option value="Flange_DIN16">Flange (DIN16)</option>
+            <option value="Flange_ANSI150">Flange (ANSI 150)</option>
+            <option value="Flange_ANSI300">Flange (ANSI 300)</option>
+          </select>
+        </div>
+        <div>
+          <label for="piece-end-end">End Prep (End)</label>
+          <select id="piece-end-end">
+            <option value="Straight">Straight</option>
+            <option value="Bevel">Bevel</option>
+            <option value="RollGroove">Roll Groove</option>
+            <option value="Scallop">Scallop</option>
+            <option value="Flange_E">Flange (Table E)</option>
+            <option value="Flange_D">Flange (Table D)</option>
+            <option value="Flange_DIN16">Flange (DIN16)</option>
+            <option value="Flange_ANSI150">Flange (ANSI 150)</option>
+            <option value="Flange_ANSI300">Flange (ANSI 300)</option>
+          </select>
+        </div>
+        <div>
+          <label for="piece-date-required">Date Required</label>
+          <input id="piece-date-required" type="date" />
+        </div>
+        <div>
+          <label for="piece-weld-priority">Weld Priority (1â€“5)</label>
+          <input id="piece-weld-priority" type="number" min="1" max="5" value="3" />
+        </div>
+        <div class="field-inline">
+          <input type="checkbox" id="piece-paint" />
+          <label for="piece-paint">Paint Required</label>
+        </div>
+      </div>
+
+      <div class="spool-image-row">
+        <div class="spool-image-controls">
+          <label>Spool image (main piece)</label>
+          <input id="spool-image-file" type="file" accept="image/*" />
+          <div id="spool-image-paste" class="spool-image-paste" tabindex="0">
+            Click here then paste (Ctrl+V) a screenshot, or use Browse above.
+          </div>
+          <button id="spool-image-clear" type="button" class="secondary small">Clear image</button>
+          <div class="spool-image-hint">
+            Image is stored per main spool for this project. Sub-spools with the same spool number reuse this image.
+          </div>
+        </div>
+        <div class="spool-image-preview">
+          <div class="spool-image-frame">
+            <div id="spool-image-empty">No image linked to this spool yet.</div>
+            <img id="spool-image-preview-img" alt="Spool preview" />
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="primary" id="btn-add-piece">Add Piece(s)</button>
+        <button class="secondary" id="btn-clear-piece-form" type="button">Clear Form</button>
+      </div>
+      <div id="piece-error" class="danger" style="display:none;"></div>
+
+      <h3 style="margin-top:22px;">Pieces for Selected Project</h3>
+      <div id="piece-empty" style="font-size:12px;color:#888;">Select a project and add pieces.</div>
+      <table id="piece-table" style="display:none;">
+        <thead>
+          <tr>
+            <th>Spool</th>
+            <th>Sub</th>
+            <th>Drawing Ref</th>
+            <th>Main?</th>
+            <th>Size</th>
+            <th>Len (mm)</th>
+            <th>Weight (kg)</th>
+            <th>Material</th>
+            <th>Type</th>
+            <th>Branch Info</th>
+            <th>End Preps</th>
+            <th>Priority</th>
+            <th>Paint?</th>
+            <th>Actions</th>
+          </tr>
+          <tr class="piece-filters">
+            <th><input id="filter-spool" class="filter-input" placeholder="Filter" /></th>
+            <th><input id="filter-sub" class="filter-input" placeholder="Filter" /></th>
+            <th><input id="filter-drawing" class="filter-input" placeholder="Filter" /></th>
+            <th></th>
+            <th><input id="filter-size" class="filter-input" placeholder="Filter" /></th>
+            <th></th>
+            <th></th>
+            <th><input id="filter-material" class="filter-input" placeholder="Filter" /></th>
+            <th><input id="filter-type" class="filter-input" placeholder="Filter" /></th>
+            <th></th>
+            <th></th>
+            <th></th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <!-- NESTING TAB -->
+    <section id="tab-nesting" class="card" style="display:none;">
+      <h2>Nesting Planner</h2>
+      <p style="font-size:13px;color:#ccc;">
+        Full production nesting grouped by Project â†’ Material â†’ Pipe Size.  
+        Enforces a 25&nbsp;mm minimum gap and minimises offcuts per 6 m stock length.
+      </p>
+
+      <div class="grid">
+        <div>
+          <label for="nest-project">Project</label>
+          <select id="nest-project">
+            <option value="">Select a projectâ€¦</option>
+          </select>
+        </div>
+        <div>
+          <label for="nest-material">Material Family</label>
+          <select id="nest-material">
+            <option value="">All materials</option>
+            <option value="CS_SCH40">CS_SCH40 (Carbon SCH40)</option>
+            <option value="SS_SCH10">SS_SCH10 (Stainless SCH10)</option>
+            <option value="HDG">HDG (Hot Dip Galv)</option>
+            <option value="CS_MED_FIRE">CS_MED_FIRE (Fire Pipe)</option>
+          </select>
+        </div>
+        <div>
+          <label for="nest-size">Pipe Size</label>
+          <select id="nest-size">
+            <option value="">All sizes</option>
+            <option value="DN25">DN25</option>
+            <option value="DN32">DN32</option>
+            <option value="DN40">DN40</option>
+            <option value="DN50">DN50</option>
+            <option value="DN65">DN65</option>
+            <option value="DN80">DN80</option>
+            <option value="DN100">DN100</option>
+            <option value="DN125">DN125</option>
+            <option value="DN150">DN150</option>
+            <option value="DN200">DN200</option>
+            <option value="DN250">DN250</option>
+            <option value="DN300">DN300</option>
+            <option value="DN350">DN350</option>
+            <option value="DN400">DN400</option>
+            <option value="DN450">DN450</option>
+            <option value="DN500">DN500</option>
+            <option value="DN600">DN600</option>
+          </select>
+        </div>
+        <div>
+          <label>Rules</label>
+          <div class="field-inline">
+            <input type="checkbox" id="nest-enforce-gap" checked disabled />
+            <span>Enforce 25 mm min gap</span>
+          </div>
+          <div class="field-inline">
+            <input type="checkbox" id="nest-respect-priority" checked />
+            <span>Respect weld priority (1 = highest)</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="primary" id="btn-generate-nests">Generate Nests</button>
+        <button class="secondary" id="btn-clear-nests" type="button">Clear Nest View</button>
+      </div>
+      <div id="nest-error" class="danger" style="display:none;"></div>
+
+      <h3 style="margin-top:22px;">Nesting Summary</h3>
+      <div id="nest-summary" style="font-size:13px;color:#ddd;">No nests yet. Generate above.</div>
+
+      <h3 style="margin-top:18px;">Stock Requirements (Forklift List)</h3>
+      <div id="nest-stock" style="font-size:12px;color:#ddd;">No data.</div>
+
+      <h3 style="margin-top:18px;">Nest Detail</h3>
+      <div id="nest-detail" style="font-size:12px;color:#ddd;">No nests yet.</div>
+
+      <div style="margin-top:16px;">
+        <button class="secondary" id="btn-download-nest-csv" type="button">Download Nest CSV (DTPS-style)</button>
+        <span style="font-size:11px;color:#888;margin-left:8px;">Includes per-piece positions within each 6 m stock length.</span>
+      </div>
+    </section>
+
+    <!-- DATA TAB -->
+    
+    <!-- DTPS TAB -->
+    <section id="tab-dtps" class="card" style="display:none;">
+      <h2>DTPS / Steel Cut Generator</h2>
+      <p style="font-size:13px;color:#ccc;">
+        Generate robot programs (.csr) and documentation (.md) for Panasonic plasma cutting.
+        Load data from saved pieces or enter manually.
+      </p>
+
+      <!-- Auto-Load Section -->
+      <div class="card" style="background:#1b1b1f;margin-top:16px;">
+        <h3>Load from Saved Data</h3>
+        
+        <!-- Load Mode Tabs -->
+        <div style="display:flex;gap:8px;margin-bottom:12px;">
+          <button class="mode-btn active" id="dtps-mode-spool" onclick="dtpsSetLoadMode('spool')">By Spool</button>
+          <button class="mode-btn" id="dtps-mode-nest" onclick="dtpsSetLoadMode('nest')">By Nest</button>
+        </div>
+        
+        <!-- By Spool Mode -->
+        <div id="dtps-load-spool-section">
+          <div class="grid">
+            <div>
+              <label for="dtps-load-project">Project</label>
+              <select id="dtps-load-project" onchange="dtpsLoadProjectPieces()">
+                <option value="">Select project...</option>
+              </select>
+            </div>
+            <div>
+              <label for="dtps-load-spool">Spool</label>
+              <select id="dtps-load-spool">
+                <option value="">Select spool...</option>
+              </select>
+            </div>
+            <div style="display:flex;align-items:flex-end;">
+              <button class="primary" onclick="dtpsLoadSpoolData()">Load Spool</button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- By Nest Mode -->
+        <div id="dtps-load-nest-section" style="display:none;">
+          <div class="grid">
+            <div>
+              <label for="dtps-load-nest-project">Project</label>
+              <select id="dtps-load-nest-project" onchange="dtpsLoadProjectNests()">
+                <option value="">Select project...</option>
+              </select>
+            </div>
+            <div>
+              <label for="dtps-load-nest-id">Nest ID</label>
+              <select id="dtps-load-nest-id">
+                <option value="">Select nest...</option>
+              </select>
+            </div>
+            <div style="display:flex;align-items:flex-end;">
+              <button class="primary" onclick="dtpsLoadNestData()">Load Nest</button>
+            </div>
+          </div>
+          <div style="margin-top:8px;font-size:11px;color:#888;">
+            Loads all pieces from one stock length (6m pipe) as positioned in nesting results.
+          </div>
+        </div>
+      </div>
+
+      <!-- Pipe Specifications -->
+      <div class="card" style="background:#1b1b1f;margin-top:16px;">
+        <h3>Pipe Specifications</h3>
+        <div class="grid">
+          <div>
+            <label for="dtps-spool-id">Spool / Pipe ID</label>
+            <input id="dtps-spool-id" type="text" placeholder="e.g. SP-004" />
+          </div>
+          <div>
+            <label for="dtps-material">Material</label>
+            <select id="dtps-material" onchange="dtpsMaterialChange()">
+              <option value="mild" selected>Mild Steel (Sched. 40)</option>
+              <option value="stainless">Stainless Steel (Sched. 10)</option>
+            </select>
+          </div>
+          <div>
+            <label for="dtps-diameter">Pipe Diameter (mm)</label>
+            <select id="dtps-diameter" onchange="dtpsDiameterChange()"></select>
+          </div>
+          <div>
+            <label for="dtps-wall">Wall Thickness (mm)</label>
+            <input id="dtps-wall" type="number" step="0.01" min="0.01" onchange="dtpsRecalculate()" />
+          </div>
+          <div>
+            <label for="dtps-stock-length">Stock Length (mm)</label>
+            <input id="dtps-stock-length" type="number" value="6000" step="1" min="0" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Add Cut -->
+      <div class="card" style="background:#1b1b1f;margin-top:16px;">
+        <h3>Add Cut</h3>
+        <div class="grid">
+          <div>
+            <label for="dtps-cut-type">Cut Type</label>
+            <select id="dtps-cut-type" onchange="dtpsToggleCutFields()">
+              <option value="straight">Straight</option>
+              <option value="bevel">Bevel</option>
+              <option value="hole" selected>Hole</option>
+              <option value="branch">Branch</option>
+              <option value="partoff">Part Off</option>
+            </select>
+          </div>
+          
+          <div id="dtps-hole-size-group">
+            <label for="dtps-hole-diameter">Hole Diameter (mm)</label>
+            <select id="dtps-hole-diameter"></select>
+          </div>
+          
+          <div id="dtps-branch-size-group" style="display:none;">
+            <label for="dtps-branch-size">Branch Pipe Size (mm)</label>
+            <select id="dtps-branch-size"></select>
+          </div>
+          
+          <div id="dtps-bevel-angle-group" style="display:none;">
+            <label for="dtps-bevel-angle">Bevel Angle</label>
+            <select id="dtps-bevel-angle">
+              <option value="30" selected>30°</option>
+            </select>
+          </div>
+          
+          <div id="dtps-direction-group" style="display:none;">
+            <label for="dtps-direction">Direction</label>
+            <select id="dtps-direction">
+              <option value="L">Left</option>
+              <option value="R" selected>Right</option>
+            </select>
+          </div>
+          
+          <div id="dtps-distance-group">
+            <label for="dtps-distance">Distance (mm)</label>
+            <input id="dtps-distance" type="number" value="0" min="0" step="1" />
+            <div id="dtps-partoff-note" style="display:none;font-size:11px;color:#ebcb8b;font-style:italic;margin-top:4px;">Adds 10mm space between pipe sections</div>
+          </div>
+          
+          <div id="dtps-angle-group">
+            <label for="dtps-angle">Angle (°)</label>
+            <input id="dtps-angle" type="number" value="0" min="0" max="360" step="1" />
+          </div>
+        </div>
+        
+        <div style="margin-top:16px;display:flex;gap:8px;">
+          <button class="primary" onclick="dtpsAddCut()">Add Cut</button>
+          <button class="secondary" onclick="dtpsClearAllCuts()">Clear All Cuts</button>
+        </div>
+      </div>
+
+      <!-- Cuts List -->
+      <div class="card" style="background:#1b1b1f;margin-top:16px;">
+        <h3>Current Cuts</h3>
+        <div id="dtps-cuts-list" style="font-size:12px;color:#ddd;">
+          No cuts added yet. Load spool data or add cuts manually.
+        </div>
+      </div>
+      
+      <!-- Visual Nesting Bar -->
+      <div id="dtps-visual-section" style="display:none;">
+        <div class="dtps-nest-visual">
+          <div class="dtps-track-header">
+            <span>ROBOT TRACK</span>
+            <span style="display:flex;align-items:center;gap:10px;">
+              <span style="font-size:24px;">←</span>
+              <span>CUT START</span>
+            </span>
+          </div>
+          <div class="dtps-pipe-layout">
+            <div class="dtps-chuck-rotator">
+              <div class="dtps-chuck-rotator-label">ROTATOR</div>
+            </div>
+            <div class="dtps-pipe-bar" id="dtps-visual-bar">
+              <!-- Segments and offcut will be added here -->
+              <div class="dtps-pipe-end-label">PIPE END</div>
+            </div>
+          </div>
+          <div class="dtps-nest-info">
+            <div class="dtps-nest-info-left">
+              <div>
+                <span>PIPE WORK SIZE ( DN.</span>
+                <span id="dtps-visual-size"> </span>
+                <span> )</span>
+              </div>
+              <div>
+                <span>NEST </span>
+                <span id="dtps-visual-nest">-</span>
+              </div>
+            </div>
+            <div class="dtps-nest-info-right">
+              <div>
+                <span>PRODUCTION DATE: </span>
+                <span id="dtps-visual-date">__.__.__</span>
+              </div>
+              <div id="dtps-export-indicator"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Processing Time -->
+      <div class="card" style="background:#1b1b1f;margin-top:16px;">
+        <h3>Processing Time</h3>
+        <div style="font-size:12px;color:#888;margin-bottom:10px;">Cuts are calculated at 100A power</div>
+        <div style="display:grid;grid-template-columns:1fr auto;gap:8px;font-size:13px;">
+          <div>Cut Time:</div>
+          <div id="dtps-cut-time" style="font-weight:600;">0s</div>
+          <div>Approx. robot move time:</div>
+          <div id="dtps-robot-time" style="font-weight:600;">0s</div>
+          <div style="border-top:1px solid #333;padding-top:8px;">Total Processing time:</div>
+          <div id="dtps-total-time" style="font-weight:600;border-top:1px solid #333;padding-top:8px;color:#88c0d0;">0s</div>
+        </div>
+      </div>
+
+      <!-- Export -->
+      <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="secondary" onclick="dtpsSaveMarkdown()">Save as Text File (.md)</button>
+        <button class="secondary" onclick="dtpsSaveCSR()">Save as CSR Program (.csr)</button>
+      </div>
+      <div style="font-size:11px;color:#666;margin-top:8px;">
+        Cut times are estimated and are only indicative of rough processing time.
+      </div>
+    </section>
+
+<section id="tab-data" class="card" style="display:none;">
+      <h2>Data View / Export</h2>
+      <p style="font-size:13px;color:#ccc;">
+        Raw data snapshot for backup or feeding into other tools.
+      </p>
+      <div id="stats" style="font-size:13px;color:#ddd;margin-bottom:10px;"></div>
+      <pre id="json-dump" style="max-height:260px;overflow:auto;font-size:11px;"></pre>
+      <button class="secondary" id="btn-download-json">Download JSON Snapshot</button>
+      <span style="font-size:11px;color:#888;margin-left:8px;">(pipe_nesting_planner_snapshot_v14.json)</span>
+      <div style="margin-top:12px;font-size:12px;">
+        <label for="json-file">Import JSON snapshot</label>
+        <input type="file" id="json-file" accept=".json,application/json" />
+        <button class="secondary" id="btn-import-json" type="button">Import</button>
+        <div id="import-status" style="margin-top:4px;color:#ccc;font-size:11px;"></div>
+      </div>
+    </section>
+
+  <!-- Image Modal -->
+  <div id="image-modal" class="image-modal">
+    <span class="image-modal-close">&times;</span>
+    <img id="modal-image" alt="Enlarged spool image">
+  </div>
+
+  </main>
+
+  <script>
+    const STORAGE_KEY = "pipeNestingPlanner_v18";
+    const LEGACY_STORAGE_KEY = "pipeNestingPlanner_v13";
+    const state = { projects: [], pieces: [] };
+
+    function loadState() {
+      try {
+        let raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) {
+          const legacy = localStorage.getItem(LEGACY_STORAGE_KEY);
+          if (legacy) raw = legacy;
+        }
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed.projects)) state.projects = parsed.projects;
+        if (Array.isArray(parsed.pieces)) state.pieces = parsed.pieces;
+      } catch (e) {
+        console.error("Failed to load state", e);
+      }
+    }
+
+    // Calculate pipe weight in kg based on size, length, and material
+    function calculatePipeWeight(pipeSize, lengthMm, materialFamily) {
+      // Weight per meter for common pipe sizes (kg/m) - SCH40 carbon steel
+      const weightTable = {
+        'DN15': 1.27, 'DN20': 1.69, 'DN25': 2.50, 'DN32': 3.24,
+        'DN40': 4.05, 'DN50': 5.44, 'DN65': 7.48, 'DN80': 9.56,
+        'DN90': 11.29, 'DN100': 13.57, 'DN125': 17.86, 'DN150': 21.69,
+        'DN200': 31.75, 'DN250': 43.39, 'DN300': 54.93, 'DN350': 66.33,
+        'DN400': 77.93, 'DN450': 89.54, 'DN500': 101.32, 'DN600': 125.19
+      };
+      
+      // Material density factors (relative to carbon steel SCH40)
+      const materialFactors = {
+        'CS_SCH40': 1.0,
+        'SS_SCH10': 0.6,    // Thinner wall
+        'HDG': 1.05,         // Slightly heavier due to galvanizing
+        'CS_MED_FIRE': 1.0
+      };
+      
+      const weightPerMeter = weightTable[pipeSize] || 10.0; // Default if size not found
+      const factor = materialFactors[materialFamily] || 1.0;
+      const lengthMeters = lengthMm / 1000;
+      
+      return (weightPerMeter * factor * lengthMeters).toFixed(2);
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      renderAll();
+    }
+
+    const tabs = document.querySelectorAll(".tab-btn");
+    const tabSections = {
+      projects: document.getElementById("tab-projects"),
+      pieces: document.getElementById("tab-pieces"),
+      nesting: document.getElementById("tab-nesting"),
+      dtps: document.getElementById("tab-dtps"),
+      data: document.getElementById("tab-data")
+    };
+
+    tabs.forEach(btn => {
+      btn.addEventListener("click", () => {
+        tabs.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        const t = btn.dataset.tab;
+        Object.entries(tabSections).forEach(([k, el]) => {
+          el.style.display = (k === t) ? "block" : "none";
+        });
+        if (t === "data") renderDataTab();
+        if (t === "dtps") dtpsInitialize();
+        if (t === "pieces") renderPieces();
+        if (t === "nesting") syncNestProjectSelector();
+      });
+    });
+
+    // Project tab
+    const projCode = document.getElementById("proj-code");
+    const projName = document.getElementById("proj-name");
+    const projStock = document.getElementById("proj-stock");
+    const projClient = document.getElementById("proj-client");
+    const mfCs40 = document.getElementById("mf-cs40");
+    const mfSs10 = document.getElementById("mf-ss10");
+    const mfHdg = document.getElementById("mf-hdg");
+    const mfFire = document.getElementById("mf-fire");
+    const projError = document.getElementById("proj-error");
+    const projEmpty = document.getElementById("proj-empty");
+    const projTable = document.getElementById("proj-table");
+    const projTableBody = projTable.querySelector("tbody");
+
+    document.getElementById("btn-add-project").addEventListener("click", () => {
+      projError.style.display = "none";
+      const code = projCode.value.trim();
+      const name = projName.value.trim();
+      const stock = parseInt(projStock.value, 10) || 0;
+      if (!code) return showProjError("Project Code required.");
+      if (!name) return showProjError("Project Name required.");
+      if (stock < 1000) return showProjError("Stock length must be â‰¥ 1000 mm.");
+
+      const mats = [];
+      if (mfCs40.checked) mats.push("CS_SCH40");
+      if (mfSs10.checked) mats.push("SS_SCH10");
+      if (mfHdg.checked) mats.push("HDG");
+      if (mfFire.checked) mats.push("CS_MED_FIRE");
+      if (!mats.length) return showProjError("Select at least one material.");
+
+      const obj = {
+        code,
+        name,
+        client: projClient.value.trim(),
+        stockLength: stock,
+        materials: mats,
+        createdAt: new Date().toISOString()
+      };
+      const idx = state.projects.findIndex(p => p.code === code);
+      if (idx >= 0) state.projects[idx] = obj;
+      else state.projects.push(obj);
+      saveState();
+      clearProjectForm();
+    });
+
+    document.getElementById("btn-clear-project-form").addEventListener("click", clearProjectForm);
+
+    function clearProjectForm() {
+      projCode.value = "";
+      projName.value = "";
+      projClient.value = "";
+      projStock.value = 6000;
+      mfCs40.checked = mfSs10.checked = mfHdg.checked = mfFire.checked = false;
+      projError.style.display = "none";
+    }
+
+    function showProjError(msg) {
+      projError.textContent = msg;
+      projError.style.display = "block";
+    }
+
+    function renderProjects() {
+      if (!state.projects.length) {
+        projEmpty.style.display = "block";
+        projTable.style.display = "none";
+      } else {
+        projEmpty.style.display = "none";
+        projTable.style.display = "table";
+      }
+      projTableBody.innerHTML = "";
+      state.projects.forEach(p => {
+        const tr = document.createElement("tr");
+        const mats = (p.materials || []).map(m => "<span class='tag'>" + m + "</span>").join(" ");
+        tr.innerHTML = `
+          <td>${p.code}</td>
+          <td>${p.name}</td>
+          <td>${p.client || ""}</td>
+          <td>${p.stockLength}</td>
+          <td>${mats}</td>
+        `;
+        tr.addEventListener("click", () => {
+          projCode.value = p.code;
+          projName.value = p.name;
+          projClient.value = p.client || "";
+          projStock.value = p.stockLength;
+          mfCs40.checked = p.materials.includes("CS_SCH40");
+          mfSs10.checked = p.materials.includes("SS_SCH10");
+          mfHdg.checked = p.materials.includes("HDG");
+          mfFire.checked = p.materials.includes("CS_MED_FIRE");
+        });
+        projTableBody.appendChild(tr);
+      });
+
+      // sync project selectors
+      const selectPieces = document.getElementById("piece-project");
+      const selectNest = document.getElementById("nest-project");
+      const currentPieces = selectPieces.value;
+      const currentNest = selectNest.value;
+      selectPieces.innerHTML = '<option value="">Select a projectâ€¦</option>';
+      selectNest.innerHTML = '<option value="">Select a projectâ€¦</option>';
+      state.projects.forEach(p => {
+        const opt1 = document.createElement("option");
+        opt1.value = p.code;
+        opt1.textContent = `${p.code} â€“ ${p.name}`;
+        selectPieces.appendChild(opt1);
+        const opt2 = document.createElement("option");
+        opt2.value = p.code;
+        opt2.textContent = `${p.code} â€“ ${p.name}`;
+        selectNest.appendChild(opt2);
+      });
+      if (currentPieces && state.projects.some(p => p.code === currentPieces)) {
+        selectPieces.value = currentPieces;
+      } else if (!currentPieces && state.projects.length) {
+        selectPieces.value = state.projects[0].code;
+      }
+      if (currentNest && state.projects.some(p => p.code === currentNest)) {
+        selectNest.value = currentNest;
+      } else if (!currentNest && state.projects.length) {
+        selectNest.value = state.projects[0].code;
+      }
+    }
+
+    function syncNestProjectSelector() {
+      renderProjects();
+    }
+
+    // Pieces tab logic
+    const pieceProject = document.getElementById("piece-project");
+    const pieceSpool = document.getElementById("piece-spool");
+    const pieceSubSpool = document.getElementById("piece-subspool");
+    const pieceDrawing = document.getElementById("piece-drawing");
+    const pieceLength = document.getElementById("piece-length");
+    const pieceQty = document.getElementById("piece-qty");
+    const pieceSize = document.getElementById("piece-size");
+    const pieceMaterial = document.getElementById("piece-material");
+    const pieceMain = document.getElementById("piece-main");
+    const pieceType = document.getElementById("piece-type");
+    const pieceEndStart = document.getElementById("piece-end-start");
+    const pieceEndEnd = document.getElementById("piece-end-end");
+    const pieceDateReq = document.getElementById("piece-date-required");
+    const pieceWeldPriority = document.getElementById("piece-weld-priority");
+    const piecePaint = document.getElementById("piece-paint");
+    const pieceError = document.getElementById("piece-error");
+    const pieceEmpty = document.getElementById("piece-empty");
+    const pieceTable = document.getElementById("piece-table");
+    const pieceTableBody = pieceTable.querySelector("tbody");
+    const btnAddPiece = document.getElementById("btn-add-piece");
+    
+    // Multi-branch system
+    const branchConnectionsSection = document.getElementById("branch-connections-section");
+    const branchDistance = document.getElementById("branch-distance");
+    const branchSize = document.getElementById("branch-size");
+    const branchAnglePreset = document.getElementById("branch-angle-preset");
+    const branchAngleCustom = document.getElementById("branch-angle-custom");
+    const branchAngleCustomGroup = document.getElementById("branch-angle-custom-group");
+    const btnAddBranch = document.getElementById("btn-add-branch");
+    const branchList = document.getElementById("branch-list");
+    let currentBranches = [];  // Temporary storage for branches being added to current piece
+    
+    let editingPieceId = null;
+    const spoolImageFile = document.getElementById("spool-image-file");
+    const spoolImagePaste = document.getElementById("spool-image-paste");
+    const spoolImagePreview = document.getElementById("spool-image-preview-img");
+    const spoolImageEmpty = document.getElementById("spool-image-empty");
+    const spoolImageClear = document.getElementById("spool-image-clear");
+    let currentSpoolImageData = null;
+
+    function toggleBranchFields() {
+      const isMain = pieceMain.checked;
+      const type = pieceType.value;
+      
+      // Show branch connections section only for main spool pieces that are straight
+      if (isMain && type === "Straight") {
+        branchConnectionsSection.style.display = "block";
+      } else {
+        branchConnectionsSection.style.display = "none";
+      }
+    }
+
+    // Toggle custom angle input
+    branchAnglePreset.addEventListener("change", () => {
+      if (branchAnglePreset.value === "custom") {
+        branchAngleCustomGroup.style.display = "block";
+      } else {
+        branchAngleCustomGroup.style.display = "none";
+      }
+    });
+
+    // Add branch to current list
+    btnAddBranch.addEventListener("click", () => {
+      const distance = parseInt(branchDistance.value);
+      const size = branchSize.value;
+      const anglePreset = branchAnglePreset.value;
+      let angle;
+
+      if (!distance || distance < 0) {
+        alert("Please enter a valid distance");
+        return;
+      }
+      if (!size) {
+        alert("Please select a branch size");
+        return;
+      }
+
+      if (anglePreset === "custom") {
+        angle = parseInt(branchAngleCustom.value);
+        if (isNaN(angle) || angle < 0 || angle > 360) {
+          alert("Please enter a custom angle between 0-360°");
+          return;
+        }
+      } else {
+        angle = parseInt(anglePreset);
+      }
+
+      // Add to current branches array
+      currentBranches.push({ distance, size, angle });
+      
+      // Clear inputs
+      branchDistance.value = "";
+      branchSize.value = "";
+      branchAnglePreset.value = "0";
+      branchAngleCustom.value = "";
+      branchAngleCustomGroup.style.display = "none";
+
+      // Re-render branch list
+      renderBranchList();
+    });
+
+    function renderBranchList() {
+      if (currentBranches.length === 0) {
+        branchList.innerHTML = '<div style="color:#666;font-style:italic;">No branches added yet</div>';
+        return;
+      }
+
+      // Sort by distance
+      currentBranches.sort((a, b) => a.distance - b.distance);
+
+      branchList.innerHTML = currentBranches.map((branch, index) => {
+        const angleLabel = 
+          branch.angle === 0 ? "0° (top)" :
+          branch.angle === 90 ? "90° (right)" :
+          branch.angle === 180 ? "180° (bottom)" :
+          branch.angle === 270 ? "270° (left)" :
+          `${branch.angle}°`;
+
+        return `
+          <div class="branch-item">
+            <div class="branch-item-info">
+              • ${branch.size} @ ${branch.distance}mm, ${angleLabel}
+            </div>
+            <button type="button" class="branch-item-delete" onclick="deleteBranch(${index})">Delete</button>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function deleteBranch(index) {
+      currentBranches.splice(index, 1);
+      renderBranchList();
+    }
+    window.deleteBranch = deleteBranch;  // Make available globally for onclick
+
+    // Add event listeners for the toggle
+    pieceMain.addEventListener("change", toggleBranchFields);
+    pieceType.addEventListener("change", toggleBranchFields);
+
+    const filterSpool = document.getElementById("filter-spool");
+    const filterSub = document.getElementById("filter-sub");
+    const filterDrawing = document.getElementById("filter-drawing");
+    const filterSize = document.getElementById("filter-size");
+    const filterMaterial = document.getElementById("filter-material");
+    const filterType = document.getElementById("filter-type");
+
+    function getSpoolRoot(spoolNo) {
+      return spoolNo ? spoolNo.replace(/\(\d+\)$/, "") : "";
+    }
+
+    function setSpoolImagePreview(dataUrl) {
+      currentSpoolImageData = dataUrl || null;
+      if (currentSpoolImageData) {
+        spoolImagePreview.src = currentSpoolImageData;
+        spoolImagePreview.style.display = "block";
+        spoolImageEmpty.style.display = "none";
+      } else {
+        spoolImagePreview.src = "";
+        spoolImagePreview.style.display = "none";
+        spoolImageEmpty.style.display = "block";
+      }
+    }
+
+    function findMainImageForSpool(projectCode, spoolIdOrRoot) {
+      const root = getSpoolRoot(spoolIdOrRoot);
+      if (!root) return null;
+      const main = state.pieces.find(p =>
+        p.projectCode === projectCode &&
+        getSpoolRoot(p.spoolNo) === root &&
+        p.isMainSpool &&
+        p.imageData
+      );
+      return main ? main.imageData : null;
+    }
+
+    spoolImageFile.addEventListener("change", (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        setSpoolImagePreview(ev.target.result);
+      };
+      reader.readAsDataURL(file);
+    });
+
+    spoolImagePaste.addEventListener("paste", (e) => {
+      const items = e.clipboardData && e.clipboardData.items;
+      if (!items) return;
+      for (let i = 0; i < items.length; i++) {
+        const it = items[i];
+        if (it.type && it.type.indexOf("image") === 0) {
+          const file = it.getAsFile();
+          const reader = new FileReader();
+          reader.onload = ev => {
+            setSpoolImagePreview(ev.target.result);
+          };
+          reader.readAsDataURL(file);
+          e.preventDefault();
+          break;
+        }
+      }
+    });
+
+    spoolImageClear.addEventListener("click", () => {
+      setSpoolImagePreview(null);
+      spoolImageFile.value = "";
+    });
+
+    pieceSpool.addEventListener("blur", () => {
+      const proj = pieceProject.value;
+      const spoolBase = pieceSpool.value.trim();
+      if (!proj || !spoolBase) return;
+      const img = findMainImageForSpool(proj, spoolBase);
+      if (img) setSpoolImagePreview(img);
+      else setSpoolImagePreview(null);
+    });
+
+
+    btnAddPiece.addEventListener("click", () => {
+      pieceError.style.display = "none";
+      const project = pieceProject.value;
+      if (!project) return showPieceError("Select a project first.");
+      const spoolBase = pieceSpool.value.trim();
+      const subBase = pieceSubSpool.value.trim();
+      const len = parseInt(pieceLength.value, 10) || 0;
+      const size = pieceSize.value;
+      const mat = pieceMaterial.value;
+      const qtyRaw = parseInt(pieceQty.value, 10);
+      const qty = editingPieceId ? 1 : (qtyRaw || 1);
+      if (!spoolBase) return showPieceError("Spool No. is required.");
+      if (!subBase) return showPieceError("Spool Sub No. is required.");
+      if (len <= 0) return showPieceError("Length must be > 0.");
+      if (!size) return showPieceError("Pipe Size is required.");
+      if (!mat) return showPieceError("Material Family is required.");
+      if (!editingPieceId && qty <= 0) return showPieceError("Quantity must be at least 1.");
+
+      // Use currentBranches array (empty array if no branches)
+      const branchConnections = currentBranches.length > 0 ? [...currentBranches] : [];
+
+      const now = Date.now();
+
+      if (editingPieceId) {
+        const idx = state.pieces.findIndex(p => p.id === editingPieceId);
+        if (idx === -1) {
+          editingPieceId = null;
+          pieceQty.disabled = false;
+          btnAddPiece.textContent = "Add Piece(s)";
+          return;
+        }
+        const t = state.pieces[idx];
+        Object.assign(t, {
+          projectCode: project,
+          imageData: currentSpoolImageData,
+          spoolNo: spoolBase,
+          spoolSubNo: subBase,
+          drawingRef: pieceDrawing.value.trim(),
+          isMainSpool: pieceMain.checked,
+          pieceLength: len,
+          pipeSize: size,
+          materialFamily: mat,
+          pipeworkType: pieceType.value,
+          endPrepStart: pieceEndStart.value,
+          endPrepEnd: pieceEndEnd.value,
+          dateRequired: pieceDateReq.value || null,
+          weldPriority: parseInt(pieceWeldPriority.value, 10) || 3,
+          paintRequired: piecePaint.checked,
+          branchConnections: branchConnections
+        });
+        if (pieceMain.checked && currentSpoolImageData) {
+          const root = getSpoolRoot(spoolBase);
+          state.pieces.forEach(p => {
+            if (p.projectCode === project && getSpoolRoot(p.spoolNo) === root) {
+              p.imageData = currentSpoolImageData;
+            }
+          });
+        }
+        editingPieceId = null;
+        pieceQty.disabled = false;
+        btnAddPiece.textContent = "Add Piece(s)";
+        saveState();
+        return;
+      }
+
+      for (let i = 1; i <= qty; i++) {
+        const spool = qty === 1 ? spoolBase : `${spoolBase}(${i})`;
+        state.pieces.push({
+          id: (now + i).toString(36),
+          imageData: currentSpoolImageData,
+          projectCode: project,
+          spoolNo: spool,
+          spoolSubNo: subBase,
+          drawingRef: pieceDrawing.value.trim(),
+          isMainSpool: pieceMain.checked,
+          pieceLength: len,
+          pipeSize: size,
+          materialFamily: mat,
+          pipeworkType: pieceType.value,
+          endPrepStart: pieceEndStart.value,
+          endPrepEnd: pieceEndEnd.value,
+          dateRequired: pieceDateReq.value || null,
+          weldPriority: parseInt(pieceWeldPriority.value, 10) || 3,
+          paintRequired: piecePaint.checked,
+          branchConnections: branchConnections,
+          createdAt: new Date().toISOString()
+        });
+      }
+      
+      // Clear branches for next piece
+      currentBranches = [];
+      renderBranchList();
+      if (pieceMain.checked && currentSpoolImageData) {
+        const root = getSpoolRoot(spoolBase);
+        state.pieces.forEach(p => {
+          if (p.projectCode === project && getSpoolRoot(p.spoolNo) === root) {
+            p.imageData = currentSpoolImageData;
+          }
+        });
+      }
+      pieceQty.value = 1;
+      saveState();
+    });
+
+    document.getElementById("btn-clear-piece-form").addEventListener("click", () => {
+      pieceSpool.value = "";
+      pieceSubSpool.value = "";
+      pieceDrawing.value = "";
+      pieceLength.value = "";
+      pieceQty.value = 1;
+      pieceSize.value = "";
+      pieceMaterial.value = "";
+      pieceMain.checked = false;
+      pieceType.value = "Straight";
+      pieceEndStart.value = "Straight";
+      pieceEndEnd.value = "Straight";
+      pieceDateReq.value = "";
+      pieceWeldPriority.value = 3;
+      piecePaint.checked = false;
+      // Clear branch connections
+      currentBranches = [];
+      renderBranchList();
+      branchDistance.value = "";
+      branchSize.value = "";
+      branchAnglePreset.value = "0";
+      branchAngleCustom.value = "";
+      branchAngleCustomGroup.style.display = "none";
+      pieceError.style.display = "none";
+      setSpoolImagePreview(null);
+      spoolImageFile.value = "";
+      editingPieceId = null;
+      pieceQty.disabled = false;
+      btnAddPiece.textContent = "Add Piece(s)";
+      renderPieces();
+    });
+
+    function showPieceError(msg) {
+      pieceError.textContent = msg;
+      pieceError.style.display = "block";
+    }
+
+    function renderPieces() {
+      const proj = pieceProject.value;
+      if (!proj) {
+        pieceEmpty.textContent = "Select a project and add pieces.";
+        pieceEmpty.style.display = "block";
+        pieceTable.style.display = "none";
+        return;
+      }
+      let filtered = state.pieces.filter(p => p.projectCode === proj);
+
+      const spoolF = filterSpool.value.trim().toLowerCase();
+      const subF = filterSub.value.trim().toLowerCase();
+      const drawingF = filterDrawing.value.trim().toLowerCase();
+      const sizeF = filterSize.value.trim().toLowerCase();
+      const materialF = filterMaterial.value.trim().toLowerCase();
+      const typeF = filterType.value.trim().toLowerCase();
+
+      if (spoolF || subF || drawingF || sizeF || materialF || typeF) {
+        filtered = filtered.filter(p => {
+          if (spoolF && !(p.spoolNo || '').toLowerCase().includes(spoolF)) return false;
+          if (subF && !(p.spoolSubNo || '').toLowerCase().includes(subF)) return false;
+          if (drawingF && !(p.drawingRef || '').toLowerCase().includes(drawingF)) return false;
+          if (sizeF && !(p.pipeSize || '').toLowerCase().includes(sizeF)) return false;
+          if (materialF && !(p.materialFamily || '').toLowerCase().includes(materialF)) return false;
+          if (typeF && !(p.pipeworkType || '').toLowerCase().includes(typeF)) return false;
+          return true;
+        });
+      }
+
+      if (!filtered.length) {
+        pieceEmpty.textContent = "No pieces yet for this project.";
+        pieceEmpty.style.display = "block";
+        pieceTable.style.display = "none";
+        return;
+      }
+      pieceEmpty.style.display = "none";
+      pieceTable.style.display = "table";
+      pieceTableBody.innerHTML = "";
+      filtered
+        .sort((a, b) => {
+          if (a.spoolNo === b.spoolNo) {
+            const typeRank = p => (p.pipeworkType === "Straight" ? 0 : 1);
+            const tDiff = typeRank(a) - typeRank(b);
+            if (tDiff !== 0) return tDiff;
+            return a.spoolSubNo.localeCompare(b.spoolSubNo);
+          }
+          return a.spoolNo.localeCompare(b.spoolNo);
+        })
+        .forEach(p => {
+          const tr = document.createElement("tr");
+          if (editingPieceId === p.id) tr.classList.add("row-editing");
+          
+          let branchInfo = "-";
+          if (p.branchConnections && p.branchConnections.length > 0) {
+            if (p.branchConnections.length === 1) {
+              const b = p.branchConnections[0];
+              branchInfo = `${b.size}@${b.distance}mm/${b.angle}°`;
+            } else {
+              branchInfo = `${p.branchConnections.length} branches`;
+            }
+          } else if (p.branchHoleOffset && p.branchHoleSize) {
+            // Legacy single branch format (migration support)
+            branchInfo = `${p.branchHoleSize} @ ${p.branchHoleOffset}mm`;
+          }
+          
+          tr.innerHTML = `
+            <td>${p.spoolNo}</td>
+            <td>${p.spoolSubNo}</td>
+            <td>${p.drawingRef || ""}</td>
+            <td>${p.isMainSpool ? "Yes" : ""}</td>
+            <td>${p.pipeSize}</td>
+            <td>${p.pieceLength}</td>
+            <td>${calculatePipeWeight(p.pipeSize, p.pieceLength, p.materialFamily)}</td>
+            <td>${p.materialFamily}</td>
+            <td>${p.pipeworkType}</td>
+            <td>${branchInfo}</td>
+            <td>${p.endPrepStart} / ${p.endPrepEnd}</td>
+            <td>${p.weldPriority}</td>
+            <td>${p.paintRequired ? "Yes" : ""}</td>
+            <td><button class="btn-row-delete" type="button">Delete</button></td>
+          `;
+          tr.querySelector(".btn-row-delete").addEventListener("click", e => {
+            e.stopPropagation();
+            if (!confirm("Delete this piece?")) return;
+            const idx = state.pieces.findIndex(x => x.id === p.id);
+            if (idx >= 0) {
+              state.pieces.splice(idx, 1);
+              if (editingPieceId === p.id) {
+                editingPieceId = null;
+                pieceQty.disabled = false;
+                btnAddPiece.textContent = "Add Piece(s)";
+              }
+              saveState();
+            }
+          });
+          tr.addEventListener("click", () => {
+            editingPieceId = p.id;
+            pieceProject.value = p.projectCode;
+            pieceSpool.value = p.spoolNo;
+            pieceSubSpool.value = p.spoolSubNo;
+            pieceDrawing.value = p.drawingRef || "";
+            pieceLength.value = p.pieceLength;
+            pieceQty.value = 1;
+            pieceQty.disabled = true;
+            pieceSize.value = p.pipeSize;
+            pieceMaterial.value = p.materialFamily;
+            pieceMain.checked = !!p.isMainSpool;
+            pieceType.value = p.pipeworkType || "Straight";
+            pieceEndStart.value = p.endPrepStart || "Straight";
+            pieceEndEnd.value = p.endPrepEnd || "Straight";
+            pieceDateReq.value = p.dateRequired || "";
+            pieceWeldPriority.value = p.weldPriority || 3;
+            piecePaint.checked = !!p.paintRequired;
+            // Load branch connections
+            currentBranches = p.branchConnections ? [...p.branchConnections] : [];
+            renderBranchList();
+            pieceError.style.display = "none";
+            toggleBranchFields();
+            const inheritedImg = p.imageData || findMainImageForSpool(p.projectCode, p.spoolNo);
+            setSpoolImagePreview(inheritedImg || null);
+            btnAddPiece.textContent = "Update Piece";
+            renderPieces();
+          });
+          pieceTableBody.appendChild(tr);
+        });
+    }
+
+    pieceProject.addEventListener("change", () => {
+      editingPieceId = null;
+      pieceQty.disabled = false;
+      btnAddPiece.textContent = "Add Piece(s)";
+      renderPieces();
+    });
+    [filterSpool, filterSub, filterDrawing, filterSize, filterMaterial, filterType].forEach(inp => {
+      if (inp) inp.addEventListener("input", renderPieces);
+    });
+
+
+    // Nesting logic
+    const nestProjectSel = document.getElementById("nest-project");
+    const nestMaterialSel = document.getElementById("nest-material");
+    const nestSizeSel = document.getElementById("nest-size");
+    const nestRespectPriority = document.getElementById("nest-respect-priority");
+    const nestError = document.getElementById("nest-error");
+    const nestSummary = document.getElementById("nest-summary");
+    const nestStock = document.getElementById("nest-stock");
+    const nestDetail = document.getElementById("nest-detail");
+    const btnGenerateNests = document.getElementById("btn-generate-nests");
+    const btnClearNests = document.getElementById("btn-clear-nests");
+    const btnNestCsv = document.getElementById("btn-download-nest-csv");
+
+    let lastNests = [];
+
+    function syncNestProjectSelector() {
+      const current = nestProjectSel.value;
+      nestProjectSel.innerHTML = '<option value="">Select a projectâ€¦</option>';
+      state.projects.forEach(p => {
+        const opt = document.createElement("option");
+        opt.value = p.code;
+        opt.textContent = `${p.code} â€“ ${p.name}`;
+        nestProjectSel.appendChild(opt);
+      });
+      if (current && state.projects.some(p => p.code === current)) {
+        nestProjectSel.value = current;
+      } else if (!current && state.projects.length) {
+        nestProjectSel.value = state.projects[0].code;
+      }
+    }
+
+    btnGenerateNests.addEventListener("click", () => {
+      nestError.style.display = "none";
+      const projCode = nestProjectSel.value;
+      if (!projCode) {
+        nestError.textContent = "Select a project.";
+        nestError.style.display = "block";
+        return;
+      }
+      const project = state.projects.find(p => p.code === projCode);
+      if (!project) {
+        nestError.textContent = "Project not found.";
+        nestError.style.display = "block";
+        return;
+      }
+      const stockLen = project.stockLength || 6000;
+      const materialFilter = nestMaterialSel.value || null;
+      const sizeFilter = nestSizeSel.value || null;
+
+      const candidates = state.pieces.filter(p => {
+        if (p.projectCode !== projCode) return false;
+        if (materialFilter && p.materialFamily !== materialFilter) return false;
+        if (sizeFilter && p.pipeSize !== sizeFilter) return false;
+        return true;
+      });
+
+      if (!candidates.length) {
+        nestSummary.textContent = "No matching pieces for this filter.";
+        nestStock.textContent = "No data.";
+        nestDetail.textContent = "No nests.";
+        lastNests = [];
+        return;
+      }
+
+      const groups = new Map();
+      candidates.forEach(p => {
+        const key = (p.materialFamily || "") + "|" + (p.pipeSize || "");
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key).push(p);
+      });
+
+      const minGap = 25;
+      const nests = [];
+      let nestIdCounter = 1;
+
+      groups.forEach((pieces, key) => {
+        const [mat, size] = key.split("|");
+        const sorted = pieces.slice().sort((a, b) => {
+          if (nestRespectPriority.checked) {
+            const pa = a.weldPriority || 3;
+            const pb = b.weldPriority || 3;
+            if (pa !== pb) return pa - pb;
+          }
+          return b.pieceLength - a.pieceLength;
+        });
+
+        const bars = [];
+        sorted.forEach(piece => {
+          let placed = false;
+          for (const bar of bars) {
+            const extraGap = bar.cuts.length > 0 ? minGap : 0;
+            if (bar.usedLen + extraGap + piece.pieceLength <= stockLen) {
+              const start = bar.usedLen + extraGap;
+              const end = start + piece.pieceLength;
+              bar.cuts.push({
+                pieceId: piece.id,
+                spoolNo: piece.spoolNo,
+                spoolSubNo: piece.spoolSubNo,
+                drawingRef: piece.drawingRef,
+                length: piece.pieceLength,
+                start,
+                end,
+                weldPriority: piece.weldPriority || 3,
+                pipeType: piece.pipeworkType || "Straight",
+                endPrepStart: piece.endPrepStart,
+                endPrepEnd: piece.endPrepEnd,
+                branchConnections: piece.branchConnections || []
+              });
+              bar.usedLen = end;
+              placed = true;
+              break;
+            }
+          }
+          if (!placed) {
+            const start = 0;
+            const end = piece.pieceLength;
+            const bar = {
+              nestId: "N" + String(nestIdCounter++).padStart(3, "0"),
+              projectCode: projCode,
+              materialFamily: mat,
+              pipeSize: size,
+              stockLength: stockLen,
+              usedLen: end,
+              cuts: []
+            };
+            bar.cuts.push({
+              pieceId: piece.id,
+              spoolNo: piece.spoolNo,
+              spoolSubNo: piece.spoolSubNo,
+              drawingRef: piece.drawingRef,
+              length: piece.pieceLength,
+              start,
+              end,
+              weldPriority: piece.weldPriority || 3,
+              pipeType: piece.pipeworkType || "Straight",
+              endPrepStart: piece.endPrepStart,
+              endPrepEnd: piece.endPrepEnd,
+              branchConnections: piece.branchConnections || []
+            });
+            bars.push(bar);
+          }
+        });
+
+        bars.forEach(bar => nests.push(bar));
+      });
+
+      lastNests = nests;
+      
+      // Update pieces with nest data for DTPS loading
+      nests.forEach(nest => {
+        const stockId = nest.nestId + '-' + nest.materialFamily + '-' + nest.pipeSize;
+        nest.cuts.forEach(cut => {
+          const piece = state.pieces.find(p => p.id === cut.pieceId);
+          if (piece) {
+            piece.Nest_Run_ID = nest.nestId;
+            piece.Pipe_Stock_ID = stockId;
+            piece.Start_Position_mm = cut.start;
+            piece.End_Position_mm = cut.end;
+          }
+        });
+      });
+      
+      // Save updated pieces with nest data
+      saveState();
+      
+      renderNests(nests);
+    });
+
+    btnClearNests.addEventListener("click", () => {
+      lastNests = [];
+      nestSummary.textContent = "No nests yet. Generate above.";
+      nestStock.textContent = "No data.";
+      nestDetail.textContent = "No nests.";
+    });
+
+    function renderNests(nests) {
+      if (!nests.length) {
+        nestSummary.textContent = "No nests generated.";
+        nestStock.textContent = "No data.";
+        nestDetail.textContent = "No nests.";
+        return;
+      }
+
+            const segmentPalette = [
+        "#8e44ad", "#3498db", "#e67e22", "#2ecc71",
+        "#e74c3c", "#f1c40f", "#1abc9c", "#9b59b6",
+        "#ff6f91", "#00bcd4", "#ff9800", "#cddc39"
+      ];
+const totalBars = nests.length;
+      const totalOffcuts = nests.reduce((acc, n) => acc + (n.stockLength - n.usedLen), 0);
+      const byGroup = new Map();
+      nests.forEach(n => {
+        const key = n.materialFamily + "|" + n.pipeSize;
+        if (!byGroup.has(key)) byGroup.set(key, []);
+        byGroup.get(key).push(n);
+      });
+      const parts = [];
+      byGroup.forEach((bars, key) => {
+        const [mat, size] = key.split("|");
+        const offcuts = bars.reduce((acc, b) => acc + (b.stockLength - b.usedLen), 0);
+        parts.push(`${mat} / ${size}: ${bars.length} stock length qty, offcuts ${offcuts.toFixed(0)} mm`);
+      });
+      nestSummary.textContent =
+        `Total stock lengths: ${totalBars} Â· Total offcuts: ${totalOffcuts.toFixed(0)} mm Â· ` +
+        parts.join(" | ");
+
+      let stockHtml = "<table><thead><tr><th>Material</th><th>Size</th><th>Stock Length qty</th><th>Stock Len (mm)</th><th>Total Cut Len (mm)</th><th>Total Offcuts (mm)</th></tr></thead><tbody>";
+      byGroup.forEach((bars, key) => {
+        const [mat, size] = key.split("|");
+        const stockLen = bars[0].stockLength;
+        const totalUsed = bars.reduce((acc, b) => acc + b.usedLen, 0);
+        const totalOffcutsGroup = bars.reduce((acc, b) => acc + (b.stockLength - b.usedLen), 0);
+        stockHtml += `<tr>
+          <td>${mat}</td>
+          <td>${size}</td>
+          <td>${bars.length}</td>
+          <td>${stockLen}</td>
+          <td>${totalUsed.toFixed(0)}</td>
+          <td>${totalOffcutsGroup.toFixed(0)}</td>
+        </tr>`;
+      });
+      stockHtml += "</tbody></table>";
+      nestStock.innerHTML = stockHtml;
+
+      let detailHtml = "";
+      nests.forEach(bar => {
+        const offcuts = bar.stockLength - bar.usedLen;
+        detailHtml += `<div class="card" style="margin:8px 0;padding:10px;border-radius:8px;background:#15151b;border:1px solid #26262b;">
+          <div style="font-size:13px;margin-bottom:4px;">
+            <span class="pill">Nest ${bar.nestId}</span>
+            <span class="pill">Mat: ${bar.materialFamily}</span>
+            <span class="pill">Size: ${bar.pipeSize}</span>
+            <span class="pill">Stock: ${bar.stockLength} mm</span>
+            <span class="pill">Used: ${bar.usedLen.toFixed(0)} mm</span>
+            <span class="pill">Offcut: ${offcuts.toFixed(0)} mm</span>
+          </div>
+          <div class="nest-bar">`;
+        const total = bar.stockLength;
+        bar.cuts.forEach((cut, i) => {
+          const leftPct = (cut.start / total) * 100;
+          const widthPct = ((cut.end - cut.start) / total) * 100;
+          let extraClass = "";
+          if (cut.pipeType === "Branch") extraClass = " branch";
+          if (cut.pipeType === "ThreadedSocket") extraClass = " threaded";
+          detailHtml += `<div class="nest-segment${extraClass}" style="left:${leftPct}%;width:${widthPct}%;background:${segmentPalette[i % segmentPalette.length]};"><span>${cut.spoolNo}</span></div>`;
+        });
+        detailHtml += `</div>
+          <div class="nest-label">Pieces (left to right):</div>
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Spool</th>
+                <th>Sub</th>
+                <th>Drawing</th>
+                <th>Len (mm)</th>
+                <th>Start (mm)</th>
+                <th>End (mm)</th>
+                <th>Priority</th>
+                <th>Type</th>
+                <th>End Preps</th>
+              </tr>
+            </thead>
+            <tbody>`;
+        bar.cuts.forEach((cut, i) => {
+          detailHtml += `<tr>
+            <td>${i + 1}</td>
+            <td>${cut.spoolNo}</td>
+            <td>${cut.spoolSubNo}</td>
+            <td>${cut.drawingRef || ""}</td>
+            <td>${cut.length}</td>
+            <td>${cut.start.toFixed(0)}</td>
+            <td>${cut.end.toFixed(0)}</td>
+            <td>${cut.weldPriority}</td>
+            <td>${cut.pipeType}</td>
+            <td>${cut.endPrepStart} / ${cut.endPrepEnd}</td>
+          </tr>`;
+        });
+        detailHtml += "</tbody></table></div>";
+      });
+      nestDetail.innerHTML = detailHtml;
+    }
+
+    btnNestCsv.addEventListener("click", () => {
+      if (!lastNests.length) {
+        alert("No nests to export. Generate nests first.");
+        return;
+      }
+      const rows = [];
+      rows.push([
+        "NestId","Project","Material","PipeSize","StockLength_mm",
+        "PieceOrder","Spool","Sub","DrawingRef","PieceLength_mm",
+        "Start_mm","End_mm","WeldPriority","PipeType","EndPrepStart","EndPrepEnd",
+        "BranchConnections"
+      ]);
+      lastNests.forEach(bar => {
+        bar.cuts.forEach((cut, idx) => {
+          // Format branch connections as "DN65@245/0°;DN50@890/90°"
+          let branchStr = "";
+          if (cut.branchConnections && cut.branchConnections.length > 0) {
+            branchStr = cut.branchConnections
+              .map(b => `${b.size}@${b.distance}/${b.angle}°`)
+              .join(";");
+          } else if (cut.branchHoleSize && cut.branchHoleOffset) {
+            // Legacy format support
+            branchStr = `${cut.branchHoleSize}@${cut.branchHoleOffset}/0°`;
+          }
+          
+          rows.push([
+            bar.nestId,
+            bar.projectCode,
+            bar.materialFamily,
+            bar.pipeSize,
+            bar.stockLength,
+            idx + 1,
+            cut.spoolNo,
+            cut.spoolSubNo,
+            cut.drawingRef || "",
+            cut.length,
+            cut.start.toFixed(0),
+            cut.end.toFixed(0),
+            cut.weldPriority,
+            cut.pipeType,
+            cut.endPrepStart,
+            cut.endPrepEnd,
+            branchStr
+          ]);
+        });
+      });
+      const csv = rows.map(r => r.map(val => '"' + String(val).replace(/"/g,'""') + '"').join(",")).join("\n");
+      const blob = new Blob([csv], {type: "text/csv"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "pipe_nesting_nests_v14.csv";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+
+    // Data tab
+    const statsEl = document.getElementById("stats");
+    const jsonDump = document.getElementById("json-dump");
+    const btnDownloadJson = document.getElementById("btn-download-json");
+    const jsonFileInput = document.getElementById("json-file");
+    const btnImportJson = document.getElementById("btn-import-json");
+    const importStatus = document.getElementById("import-status");
+
+    function renderDataTab() {
+      const projCount = state.projects.length;
+      const pieceCount = state.pieces.length;
+      const byProject = {};
+      state.pieces.forEach(p => {
+        byProject[p.projectCode] = (byProject[p.projectCode] || 0) + 1;
+      });
+      const breakdown = Object.entries(byProject)
+        .map(([code, count]) => `${code}: ${count} pcs`).join(" | ") || "No pieces yet";
+      statsEl.textContent = `Projects: ${projCount} Â· Pieces: ${pieceCount} Â· Breakdown: ${breakdown}`;
+      jsonDump.textContent = JSON.stringify(state, null, 2);
+    }
+
+    btnDownloadJson.addEventListener("click", () => {
+      const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "pipe_nesting_planner_snapshot_v14.json";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+
+    btnImportJson.addEventListener("click", () => {
+      importStatus.style.color = "#ccc";
+      importStatus.textContent = "";
+      const file = jsonFileInput.files && jsonFileInput.files[0];
+      if (!file) {
+        importStatus.style.color = "#ff8a80";
+        importStatus.textContent = "Select a JSON file first.";
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          if (!Array.isArray(parsed.projects) || !Array.isArray(parsed.pieces)) {
+            throw new Error('JSON must contain "projects" and "pieces" arrays.');
+          }
+          state.projects = parsed.projects;
+          state.pieces = parsed.pieces;
+          saveState();
+          importStatus.style.color = "#8bc34a";
+          importStatus.textContent = "Snapshot imported successfully.";
+          renderDataTab();
+        } catch (err) {
+          importStatus.style.color = "#ff8a80";
+          importStatus.textContent = "Import failed: " + err.message;
+        }
+      };
+      reader.readAsText(file);
+    });
+
+    function renderAll() {
+      renderProjects();
+      renderPieces();
+    }
+
+
+    loadState();
+    renderAll();
+
+    // Image modal functionality (with slight delay to ensure DOM is ready)
+    setTimeout(() => {
+      const imageModal = document.getElementById('image-modal');
+      const modalImage = document.getElementById('modal-image');
+      const modalClose = document.querySelector('.image-modal-close');
+      const previewImage = document.getElementById('spool-image-preview-img');
+
+      if (previewImage && imageModal && modalImage && modalClose) {
+        console.log('Image modal initialized successfully');
+        
+        previewImage.addEventListener('click', () => {
+          console.log('Preview image clicked', previewImage.src, previewImage.style.display);
+          if (previewImage.src && previewImage.style.display !== 'none') {
+            modalImage.src = previewImage.src;
+            imageModal.classList.add('active');
+            console.log('Modal opened');
+          }
+        });
+
+        modalClose.addEventListener('click', () => {
+          imageModal.classList.remove('active');
+          console.log('Modal closed via X button');
+        });
+
+        imageModal.addEventListener('click', (e) => {
+          if (e.target === imageModal) {
+            imageModal.classList.remove('active');
+            console.log('Modal closed via background click');
+          }
+        });
+      } else {
+        console.error('Image modal elements not found:', {
+          previewImage: !!previewImage,
+          imageModal: !!imageModal,
+          modalImage: !!modalImage,
+          modalClose: !!modalClose
+        });
+      }
+    }, 100);
+  
+    // ===== DTPS INTEGRATION =====
+    // ===== DTPS / STEEL CUT GENERATOR =====
+    
+    // Constants (EXACT from proven code)
+    const DTPS_MILD_STEEL_SIZES = [65, 80, 90, 100, 125, 150, 200, 250, 300, 350, 400, 450, 500];
+    const DTPS_STAINLESS_STEEL_SIZES = [65, 80, 90, 100, 125, 150, 200, 250, 300, 350, 400, 450, 500];
+    
+    const DTPS_MILD_STEEL_WALL = {
+      65: 5.16, 80: 5.49, 90: 5.74, 100: 6.02,
+      125: 6.55, 150: 7.11, 200: 8.18, 250: 9.27,
+      300: 10.31, 350: 11.13, 400: 12.70, 450: 14.27, 500: 15.09
+    };
+    
+    const DTPS_STAINLESS_STEEL_WALL = {
+      65: 3.05, 80: 3.05, 90: 3.05, 100: 3.05,
+      125: 3.40, 150: 3.40, 200: 3.76, 250: 4.19,
+      300: 4.57, 350: 4.78, 400: 4.78, 450: 4.78, 500: 5.54
+    };
+    
+    const DTPS_BASE_WALL = 8.18;
+    const DTPS_BASE_SPEEDS = {
+      straight: 3.5,
+      bevel: 2.0,
+      hole: 1.7,
+      branch: 3.0
+    };
+    
+    // State
+    let dtpsCuts = [];
+    let dtpsCutIdCounter = 0;
+    let dtpsLastPartOffDistance = 0;
+    
+    // Helper functions
+    function dtpsGetCurrentPipeSizes() {
+      const material = document.getElementById('dtps-material').value;
+      return material === 'mild' ? DTPS_MILD_STEEL_SIZES : DTPS_STAINLESS_STEEL_SIZES;
+    }
+    
+    function dtpsGetCurrentWallCorrelation() {
+      const material = document.getElementById('dtps-material').value;
+      return material === 'mild' ? DTPS_MILD_STEEL_WALL : DTPS_STAINLESS_STEEL_WALL;
+    }
+    
+    function dtpsGetWallThicknessForDiameter(diameter) {
+      const correlation = dtpsGetCurrentWallCorrelation();
+      return correlation[diameter] || 8.00;
+    }
+    
+    // Core calculations (EXACT from proven code)
+    function dtpsCalculateSpeed(wallThickness, cutType, bevelAngle = 45) {
+      const materialRatio = wallThickness / DTPS_BASE_WALL;
+      
+      if (cutType === 'bevel') {
+        const speedAtAngle = DTPS_BASE_SPEEDS.straight - 
+          (DTPS_BASE_SPEEDS.straight - DTPS_BASE_SPEEDS.bevel) * (bevelAngle / 45);
+        return speedAtAngle / materialRatio;
+      }
+      
+      return DTPS_BASE_SPEEDS[cutType] / materialRatio;
+    }
+    
+    function dtpsCalculateCutTime(diameter, wallThickness, cutType, holeDiameter = null, bevelAngle = 45, branchSize = null) {
+      let distance;
+      const actualDiameter = diameter * 1.1;
+      
+      if (cutType === 'hole') {
+        const actualHoleDiameter = holeDiameter * 1.1;
+        distance = (Math.PI * actualHoleDiameter) / 1000;
+      } else if (cutType === 'branch') {
+        distance = (Math.PI * actualDiameter * 1.3) / 1000;
+      } else {
+        distance = (Math.PI * actualDiameter) / 1000;
+      }
+      
+      const speed = dtpsCalculateSpeed(wallThickness, cutType, bevelAngle);
+      let timeInSeconds = (distance / speed) * 60;
+      
+      const REAL_WORLD_CALIBRATION = 1.000;
+      timeInSeconds = timeInSeconds * REAL_WORLD_CALIBRATION;
+      
+      return timeInSeconds;
+    }
+    
+    function dtpsFormatTime(seconds) {
+      if (seconds < 60) {
+        return seconds.toFixed(0) + 's';
+      } else {
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.round(seconds % 60);
+        return mins + 'min ' + secs + 's';
+      }
+    }
+    
+    // UI functions
+    function dtpsPopulatePipeDiameters() {
+      const select = document.getElementById('dtps-diameter');
+      const currentValue = select.value;
+      const sizes = dtpsGetCurrentPipeSizes();
+      
+      select.innerHTML = '';
+      sizes.forEach(size => {
+        const option = document.createElement('option');
+        option.value = size;
+        option.textContent = size + 'mm';
+        if (size === 125) option.selected = true;
+        select.appendChild(option);
+      });
+      
+      if (sizes.includes(parseFloat(currentValue))) {
+        select.value = currentValue;
+      }
+      
+      dtpsUpdateWallThicknessForDiameter();
+    }
+    
+    function dtpsUpdateWallThicknessForDiameter() {
+      const diameter = parseFloat(document.getElementById('dtps-diameter').value);
+      const wallThickness = dtpsGetWallThicknessForDiameter(diameter);
+      document.getElementById('dtps-wall').value = wallThickness.toFixed(2);
+    }
+    
+    function dtpsMaterialChange() {
+      dtpsPopulatePipeDiameters();
+      dtpsUpdateHoleSizeOptions();
+      dtpsUpdateBranchSizeOptions();
+      dtpsRecalculate();
+    }
+    
+    function dtpsDiameterChange() {
+      dtpsUpdateWallThicknessForDiameter();
+      dtpsUpdateHoleSizeOptions();
+      dtpsUpdateBranchSizeOptions();
+      dtpsRecalculate();
+    }
+    
+    function dtpsUpdateHoleSizeOptions() {
+      const pipeDiameter = parseFloat(document.getElementById('dtps-diameter').value);
+      const select = document.getElementById('dtps-hole-diameter');
+      const pipeSizes = dtpsGetCurrentPipeSizes();
+      const fixedHoles = [15, 20, 25, 32, 40];
+      const combinedSizes = [...fixedHoles, ...pipeSizes.filter(s => s <= pipeDiameter)];
+      
+      select.innerHTML = '';
+      combinedSizes.forEach(size => {
+        const option = document.createElement('option');
+        option.value = size;
+        option.textContent = size + 'mm';
+        select.appendChild(option);
+      });
+      
+      if (combinedSizes.length > 0) {
+        select.value = combinedSizes[0];
+      }
+    }
+    
+    function dtpsUpdateBranchSizeOptions() {
+      const pipeDiameter = parseFloat(document.getElementById('dtps-diameter').value);
+      const select = document.getElementById('dtps-branch-size');
+      const sizes = dtpsGetCurrentPipeSizes();
+      
+      select.innerHTML = '';
+      sizes.forEach(size => {
+        if (size >= pipeDiameter) {
+          const option = document.createElement('option');
+          option.value = size;
+          option.textContent = size + 'mm';
+          select.appendChild(option);
+        }
+      });
+    }
+    
+    function dtpsToggleCutFields() {
+      const cutType = document.getElementById('dtps-cut-type').value;
+      const distanceInput = document.getElementById('dtps-distance');
+      const partoffNote = document.getElementById('dtps-partoff-note');
+      
+      document.getElementById('dtps-hole-size-group').style.display = cutType === 'hole' ? 'block' : 'none';
+      document.getElementById('dtps-branch-size-group').style.display = cutType === 'branch' ? 'block' : 'none';
+      document.getElementById('dtps-bevel-angle-group').style.display = cutType === 'bevel' ? 'block' : 'none';
+      document.getElementById('dtps-direction-group').style.display = (cutType === 'bevel' || cutType === 'branch') ? 'block' : 'none';
+      document.getElementById('dtps-angle-group').style.display = (cutType === 'hole' || cutType === 'branch') ? 'block' : 'none';
+      
+      if (cutType === 'hole') {
+        dtpsUpdateHoleSizeOptions();
+      } else if (cutType === 'branch') {
+        dtpsUpdateBranchSizeOptions();
+      }
+      
+      if (cutType === 'partoff') {
+        const lastCut = dtpsCuts.length > 0 ? dtpsCuts[dtpsCuts.length - 1] : null;
+        if (lastCut) {
+          distanceInput.value = lastCut.distance + 10;
+        }
+        distanceInput.disabled = true;
+        partoffNote.style.display = 'block';
+      } else {
+        distanceInput.disabled = false;
+        partoffNote.style.display = 'none';
+      }
+    }
+    
+    // Cut management
+    function dtpsAddCut() {
+      const cutType = document.getElementById('dtps-cut-type').value;
+      const holeDiameter = cutType === 'hole' ? parseFloat(document.getElementById('dtps-hole-diameter').value) : null;
+      const bevelAngle = cutType === 'bevel' ? parseFloat(document.getElementById('dtps-bevel-angle').value) : null;
+      const branchSize = cutType === 'branch' ? parseFloat(document.getElementById('dtps-branch-size').value) : null;
+      const direction = (cutType === 'bevel' || cutType === 'branch') ? document.getElementById('dtps-direction').value : null;
+      let distance = parseFloat(document.getElementById('dtps-distance').value);
+      const angle = (cutType === 'hole' || cutType === 'branch') ? parseFloat(document.getElementById('dtps-angle').value) : null;
+      
+      let subDistance = null;
+      if (cutType === 'partoff') {
+        dtpsLastPartOffDistance = distance;
+      } else if (dtpsLastPartOffDistance > 0) {
+        subDistance = distance;
+        distance = distance + dtpsLastPartOffDistance;
+      }
+      
+      const cut = {
+        id: dtpsCutIdCounter++,
+        cutType,
+        direction,
+        holeDiameter,
+        bevelAngle,
+        branchSize,
+        distance,
+        subDistance,
+        angle
+      };
+      
+      dtpsCuts.push(cut);
+      dtpsRenderCuts();
+      dtpsUpdateTotals();
+      
+      if (cutType !== 'partoff') {
+        document.getElementById('dtps-distance').value = 0;
+      }
+      
+      document.getElementById('dtps-cut-type').focus();
+    }
+    
+    function dtpsDeleteCut(id) {
+      dtpsCuts = dtpsCuts.filter(cut => cut.id !== id);
+      
+      dtpsLastPartOffDistance = 0;
+      for (let i = 0; i < dtpsCuts.length; i++) {
+        if (dtpsCuts[i].cutType === 'partoff') {
+          dtpsLastPartOffDistance = dtpsCuts[i].distance;
+        }
+      }
+      
+      dtpsRenderCuts();
+      dtpsUpdateTotals();
+    }
+    window.dtpsDeleteCut = dtpsDeleteCut;
+    
+    function dtpsClearAllCuts() {
+      if (dtpsCuts.length === 0) return;
+      if (!confirm('Clear all cuts?')) return;
+      dtpsCuts = [];
+      dtpsLastPartOffDistance = 0;
+      dtpsRenderCuts();
+      dtpsUpdateTotals();
+    }
+    
+    function dtpsGetCutTypeName(type) {
+      const names = {
+        straight: 'Straight Cut',
+        bevel: 'Bevel Cut',
+        hole: 'Side Hole',
+        branch: 'Branch Cut',
+        partoff: 'Part Off'
+      };
+      return names[type];
+    }
+    
+    function dtpsSortCuts() {
+      dtpsCuts.sort((a, b) => {
+        const da = a.distance ?? 0;
+        const db = b.distance ?? 0;
+        return da - db;
+      });
+    }
+    
+    function dtpsRenderCuts() {
+      dtpsSortCuts();
+      
+      const container = document.getElementById('dtps-cuts-list');
+      const diameter = parseFloat(document.getElementById('dtps-diameter').value);
+      const wallThickness = parseFloat(document.getElementById('dtps-wall').value);
+      
+      if (dtpsCuts.length === 0) {
+        container.innerHTML = '<div style="color:#888;">No cuts added yet. Load spool data or add cuts manually.</div>';
+        return;
+      }
+      
+      let html = '<div style="display:flex;flex-direction:column;gap:8px;">';
+      
+      dtpsCuts.forEach(cut => {
+        if (cut.cutType === 'partoff') {
+          html += '<div style="background:#26262b;padding:8px;border-radius:4px;display:flex;justify-content:space-between;align-items:center;">';
+          html += '<div>';
+          html += '<div style="font-weight:600;">' + dtpsGetCutTypeName(cut.cutType) + '</div>';
+          html += '<div style="font-size:11px;color:#aaa;">Distance: ' + cut.distance + 'mm</div>';
+          html += '<div style="font-size:10px;color:#ebcb8b;font-style:italic;">Adds 10mm space between pipe sections</div>';
+          html += '</div>';
+          html += '<div style="display:flex;align-items:center;gap:8px;">';
+          html += '<span style="font-weight:600;">2s</span>';
+          html += '<button class="btn-row-delete" onclick="dtpsDeleteCut(' + cut.id + ')">Delete</button>';
+          html += '</div>';
+          html += '</div>';
+        } else {
+          const speed = dtpsCalculateSpeed(wallThickness, cut.cutType, cut.bevelAngle);
+          const time = dtpsCalculateCutTime(diameter, wallThickness, cut.cutType, cut.holeDiameter, cut.bevelAngle, cut.branchSize);
+          const timePrefix = cut.cutType === 'branch' ? '~' : '';
+          
+          let details = 'Speed: ' + speed.toFixed(2) + ' m/min';
+          if (cut.subDistance !== null) details += ', Sub: ' + cut.subDistance + 'mm';
+          details += ', Dist: ' + cut.distance + 'mm';
+          
+          // Calculate length and weight for straight cuts and branches
+          if (cut.cutType === 'straight' || cut.cutType === 'branch') {
+            // Find the next cut to calculate length
+            const cutIndex = dtpsCuts.indexOf(cut);
+            const nextStraightCut = dtpsCuts.slice(cutIndex + 1).find(c => c.cutType === 'straight' || c.cutType === 'branch');
+            const stockLength = parseFloat(document.getElementById('dtps-stock-length').value) || 6000;
+            const pieceLength = nextStraightCut ? (nextStraightCut.distance - cut.distance) : (stockLength - cut.distance);
+            
+            if (pieceLength > 0) {
+              const material = document.getElementById('dtps-material').value;
+              const sizeDN = 'DN' + diameter;
+              const weight = calculatePipeWeight(sizeDN, pieceLength, material);
+              details += ', Len: ' + Math.round(pieceLength) + 'mm, Weight: ' + weight + 'kg';
+            }
+          }
+          
+          if (cut.cutType === 'hole') details += ', Hole: ' + cut.holeDiameter + 'mm';
+          if (cut.cutType === 'branch') details += ', Branch: ' + cut.branchSize + 'mm';
+          if (cut.cutType === 'bevel') details += ', Bevel: ' + cut.bevelAngle + '°';
+          if (cut.angle !== null) details += ', Angle: ' + cut.angle + '°';
+          if (cut.direction) details += ', Dir: ' + cut.direction;
+          
+          html += '<div style="background:#26262b;padding:8px;border-radius:4px;display:flex;justify-content:space-between;align-items:center;">';
+          html += '<div style="flex:1;">';
+          
+          // Show cut type with spool label if available (from nest loading)
+          let titleText = dtpsGetCutTypeName(cut.cutType);
+          if (cut.spoolLabel) {
+            titleText += ' <span style="color:#ffd86b;margin-left:4px;">(' + cut.spoolLabel + ')</span>';
+          }
+          html += '<div style="font-weight:600;">' + titleText + '</div>';
+          
+          html += '<div style="font-size:11px;color:#aaa;">' + details + '</div>';
+          html += '</div>';
+          html += '<div style="display:flex;align-items:center;gap:8px;">';
+          html += '<span style="font-weight:600;">' + timePrefix + dtpsFormatTime(time) + '</span>';
+          html += '<button class="btn-row-delete" onclick="dtpsDeleteCut(' + cut.id + ')">Delete</button>';
+          html += '</div>';
+          html += '</div>';
+        }
+      });
+      
+      html += '</div>';
+      container.innerHTML = html;
+    }
+    
+    function dtpsUpdateTotals() {
+      const diameter = parseFloat(document.getElementById('dtps-diameter').value);
+      const wallThickness = parseFloat(document.getElementById('dtps-wall').value);
+      
+      const totalSeconds = dtpsCuts.reduce((sum, cut) => {
+        if (cut.cutType === 'partoff') return sum + 2;
+        return sum + dtpsCalculateCutTime(diameter, wallThickness, cut.cutType, cut.holeDiameter, cut.bevelAngle, cut.branchSize);
+      }, 0);
+      
+      const robotTime = totalSeconds * 0.15;
+      const totalWithMovement = totalSeconds * 1.15;
+      
+      document.getElementById('dtps-cut-time').textContent = dtpsFormatTime(totalSeconds);
+      document.getElementById('dtps-robot-time').textContent = dtpsFormatTime(robotTime);
+      document.getElementById('dtps-total-time').textContent = dtpsFormatTime(totalWithMovement);
+      
+      dtpsRenderVisualBar();
+    }
+    
+    function dtpsRenderVisualBar() {
+      const visualSection = document.getElementById('dtps-visual-section');
+      const visualBar = document.getElementById('dtps-visual-bar');
+      const pipeIdEl = document.getElementById('dtps-spool-id');
+      
+      if (dtpsCuts.length === 0) {
+        visualSection.style.display = 'none';
+        return;
+      }
+      
+      visualSection.style.display = 'block';
+      
+      const stockLength = parseFloat(document.getElementById('dtps-stock-length').value) || 6000;
+      const diameter = document.getElementById('dtps-diameter').value || '';
+      const pipeId = pipeIdEl.value || 'Unknown';
+      
+      document.getElementById('dtps-visual-size').textContent = diameter;
+      document.getElementById('dtps-visual-nest').textContent = pipeId;
+      
+      const today = new Date();
+      const dateStr = String(today.getDate()).padStart(2, '0') + '.' + 
+                     String(today.getMonth() + 1).padStart(2, '0') + '.' + 
+                     today.getFullYear();
+      document.getElementById('dtps-visual-date').textContent = dateStr;
+      
+      const exportStatus = dtpsGetExportStatus(pipeId);
+      const statusEl = document.getElementById('dtps-export-indicator');
+      if (exportStatus) {
+        statusEl.innerHTML = '<span class="dtps-export-status exported"><span class="dtps-export-checkmark">✓</span> EXPORTED</span>';
+      } else {
+        statusEl.innerHTML = '<span class="dtps-export-status not-exported">NOT EXPORTED</span>';
+      }
+      
+      const segmentPalette = [
+        '#8e44ad', '#3498db', '#e67e22', '#2ecc71',
+        '#e74c3c', '#f1c40f', '#1abc9c', '#9b59b6',
+        '#ff6f91', '#00bcd4', '#ff9800', '#cddc39'
+      ];
+      
+      const straightCuts = dtpsCuts.filter(c => c.cutType === 'straight' || c.cutType === 'branch');
+      const holeCuts = dtpsCuts.filter(c => c.cutType === 'hole' && !c.isBranchHole);
+      const branchHoles = dtpsCuts.filter(c => c.cutType === 'hole' && c.isBranchHole);
+      const partoffs = dtpsCuts.filter(c => c.cutType === 'partoff');
+      
+      // Cutting starts from PIPE END (right) and works toward ROTATOR (left)
+      // Each cut makes the pipe shorter, working right to left
+      // The final ROTATOR OFFCUT = what remains attached to rotator after ALL cutting
+      
+      // Calculate the ROTATOR offcut (what's left after all cutting is done)
+      // Offcut = Stock Length - (End position of rightmost piece)
+      let rotatorOffcutLength = 0;
+      
+      console.log('=== OFFCUT CALCULATION DEBUG ===');
+      console.log('Stock Length:', stockLength);
+      console.log('Straight cuts:', straightCuts.length);
+      
+      if (straightCuts.length > 0) {
+        // Find the rightmost piece (last to be cut, closest to pipe end)
+        // This is the piece with the highest END position
+        let maxEndPosition = 0;
+        
+        straightCuts.forEach((cut, idx) => {
+          const start = cut.distance || 0;
+          let end = 0;
+          
+          const nextCut = straightCuts[idx + 1];
+          if (nextCut) {
+            end = nextCut.distance;
+          } else if (cut.pieceLength) {
+            end = start + cut.pieceLength;
+          } else {
+            // Fallback: assume piece goes to next cut or end
+            end = stockLength;
+          }
+          
+          console.log('Cut', idx + 1, '- Start:', start, 'End:', end, 'Length:', end - start);
+          maxEndPosition = Math.max(maxEndPosition, end);
+        });
+        
+        // Offcut is what's left after the rightmost piece
+        rotatorOffcutLength = stockLength - maxEndPosition;
+        console.log('Max End Position:', maxEndPosition);
+        console.log('Calculated Offcut:', rotatorOffcutLength);
+      }
+      
+      const rotatorOffcutWidthPct = (rotatorOffcutLength / stockLength) * 100;
+      console.log('Offcut Width %:', rotatorOffcutWidthPct);
+      console.log('================================');
+      
+      let html = '<div class="dtps-pipe-end-label">PIPE END</div>';
+      
+      // Add rotator offcut section if there is one (at left/start)
+      // This represents waste that remains attached to rotator after all cutting
+      if (rotatorOffcutLength > 1) { // Show if > 1mm
+        html += '<div class="dtps-offcut-section" style="width:' + rotatorOffcutWidthPct + '%;">';
+        html += '<div class="dtps-offcut-label">OFFCUT<br>' + Math.round(rotatorOffcutLength) + 'mm</div>';
+        html += '</div>';
+      }
+      
+      // Render pieces - they start AFTER the offcut gap
+      // Pieces occupy the "usable" portion of the pipe
+      straightCuts.forEach((cut, idx) => {
+        const start = cut.distance || 0;
+        let end = stockLength;
+        
+        const nextCut = straightCuts[idx + 1];
+        if (nextCut) {
+          end = nextCut.distance || stockLength;
+        } else if (cut.pieceLength) {
+          // Last piece - use actual piece length if available
+          end = start + cut.pieceLength;
+        }
+        
+        // Pieces are positioned in the USABLE section (after offcut)
+        // So their visual position = offcut% + (their position / usable length * remaining %)
+        const usableLength = stockLength - rotatorOffcutLength;
+        const leftPct = rotatorOffcutWidthPct + ((start / usableLength) * (100 - rotatorOffcutWidthPct));
+        const widthPct = ((end - start) / usableLength) * (100 - rotatorOffcutWidthPct);
+        const color = segmentPalette[idx % segmentPalette.length];
+        const label = cut.spoolLabel || 'Cut ' + (idx + 1);
+        
+        // Make pieces clickable - store offcut for distance calculation
+        const cutId = cut.id || idx;
+        html += '<div class="dtps-pipe-segment" data-offcut="' + rotatorOffcutLength + '" style="left:' + leftPct + '%;width:' + widthPct + '%;background:' + color + ';z-index:2;cursor:pointer;" onclick="dtpsShowPieceDetail(' + cutId + ', ' + rotatorOffcutLength + ')">';
+        html += '<div class="dtps-segment-label">' + label + '</div>';
+        if (widthPct > 5) {
+          html += '<div class="dtps-segment-type">' + (cut.cutType === 'branch' ? 'Branch' : 'Cut') + '</div>';
+        }
+        html += '</div>';
+      });
+      
+      branchHoles.forEach(hole => {
+        const pos = hole.distance || 0;
+        
+        // Only show holes that are in the usable pipe area (after offcut)
+        // If hole position is less than offcut length, it's in the waste zone - skip it
+        if (pos < rotatorOffcutLength) {
+          return; // Skip holes in offcut zone
+        }
+        
+        // Adjust hole position to account for offcut (same as pieces)
+        const usableLength = stockLength - rotatorOffcutLength;
+        const leftPct = rotatorOffcutWidthPct + (((pos - rotatorOffcutLength) / usableLength) * (100 - rotatorOffcutWidthPct));
+        html += '<div class="dtps-hole-marker" style="left:' + leftPct + '%;"></div>';
+      });
+      
+      partoffs.forEach(po => {
+        const pos = po.distance || 0;
+        
+        // Only show partoffs that are in the usable pipe area (after offcut)
+        if (pos < rotatorOffcutLength) {
+          return; // Skip partoffs in offcut zone
+        }
+        
+        // Adjust partoff position to account for offcut
+        const usableLength = stockLength - rotatorOffcutLength;
+        const leftPct = rotatorOffcutWidthPct + (((pos - rotatorOffcutLength) / usableLength) * (100 - rotatorOffcutWidthPct));
+        html += '<div class="dtps-partoff-marker" style="left:' + leftPct + '%;">';
+        html += '<div class="dtps-partoff-label">PART OFF<br>25mm</div>';
+        html += '</div>';
+      });
+      
+      visualBar.innerHTML = html;
+    }
+    
+    function dtpsShowPieceDetail(cutId, offcutLength) {
+      // Find the cut in dtpsCuts array
+      const cut = dtpsCuts.find(c => c.id === cutId);
+      if (!cut) return;
+      
+      offcutLength = offcutLength || 0; // Default to 0 if not provided
+      
+      // Get additional info
+      const diameter = document.getElementById('dtps-diameter').value;
+      const material = document.getElementById('dtps-material').value;
+      const stockLength = parseFloat(document.getElementById('dtps-stock-length').value) || 6000;
+      const wallThickness = parseFloat(document.getElementById('dtps-wall').value);
+      
+      // Calculate piece length and weight
+      const cutIndex = dtpsCuts.indexOf(cut);
+      const straightCuts = dtpsCuts.filter(c => c.cutType === 'straight' || c.cutType === 'branch');
+      const straightIndex = straightCuts.indexOf(cut);
+      
+      let pieceLength = 0;
+      if (straightIndex >= 0) {
+        const nextStraight = straightCuts[straightIndex + 1];
+        if (nextStraight) {
+          pieceLength = nextStraight.distance - cut.distance;
+        } else if (cut.pieceLength) {
+          pieceLength = cut.pieceLength;
+        } else {
+          pieceLength = stockLength - cut.distance;
+        }
+      }
+      
+      const sizeDN = 'DN' + diameter;
+      const weight = calculatePipeWeight(sizeDN, pieceLength, material);
+      
+      // Create modal HTML
+      let modalHtml = '<div class="dtps-modal-overlay" onclick="dtpsCloseModal(event)">';
+      modalHtml += '<div class="dtps-modal" onclick="event.stopPropagation()">';
+      modalHtml += '<div class="dtps-modal-header">';
+      modalHtml += '<div class="dtps-modal-title">' + (cut.spoolLabel || 'Cut ' + (cutIndex + 1)) + '</div>';
+      modalHtml += '<button class="dtps-modal-close" onclick="dtpsCloseModal()">✕</button>';
+      modalHtml += '</div>';
+      modalHtml += '<div class="dtps-modal-content">';
+      
+      // Details
+      modalHtml += '<div class="dtps-detail-row"><div class="dtps-detail-label">Cut Type:</div><div class="dtps-detail-value">' + dtpsGetCutTypeName(cut.cutType) + '</div></div>';
+      
+      // Distance from PIPE END, accounting for offcut
+      // If offcut = 451mm, and piece starts at 0mm from rotator data,
+      // it actually starts at 451mm from rotator physically
+      // So distance from pipe end = 6000 - (0 + 451) = 5549mm
+      const actualPositionFromRotator = (cut.distance || 0) + offcutLength;
+      const distanceFromPipeEnd = stockLength - actualPositionFromRotator;
+      modalHtml += '<div class="dtps-detail-row"><div class="dtps-detail-label">Distance from Pipe End:</div><div class="dtps-detail-value">' + Math.round(distanceFromPipeEnd) + ' mm</div></div>';
+      
+      if (cut.cutType === 'straight' || cut.cutType === 'branch') {
+        modalHtml += '<div class="dtps-detail-row"><div class="dtps-detail-label">Piece Length:</div><div class="dtps-detail-value">' + Math.round(pieceLength) + ' mm</div></div>';
+        
+        // Find holes associated with this piece
+        const holesForThisPiece = dtpsCuts.filter(c => 
+          c.cutType === 'hole' && 
+          c.distance >= cut.distance && 
+          c.distance < (cut.distance + pieceLength)
+        );
+        
+        if (holesForThisPiece.length > 0) {
+          modalHtml += '<div class="dtps-detail-row"><div class="dtps-detail-label">Holes on This Piece:</div><div class="dtps-detail-value">' + holesForThisPiece.length + '</div></div>';
+          
+          holesForThisPiece.forEach((hole, holeIdx) => {
+            const holeOffsetFromPieceStart = hole.distance - cut.distance;
+            const holeOffsetFromPieceEnd = pieceLength - holeOffsetFromPieceStart;
+            modalHtml += '<div class="dtps-detail-row"><div class="dtps-detail-label">  Hole ' + (holeIdx + 1) + ' (DN' + (hole.holeDiameter || '?') + '):</div><div class="dtps-detail-value">' + Math.round(holeOffsetFromPieceStart) + 'mm from start, ' + Math.round(holeOffsetFromPieceEnd) + 'mm from end</div></div>';
+            if (hole.angle !== null && hole.angle !== undefined) {
+              modalHtml += '<div class="dtps-detail-row"><div class="dtps-detail-label">    Angle:</div><div class="dtps-detail-value">' + hole.angle + '°</div></div>';
+            }
+          });
+        }
+        
+        modalHtml += '<div class="dtps-detail-row"><div class="dtps-detail-label">Weight:</div><div class="dtps-detail-value">' + weight + ' kg</div></div>';
+      }
+      
+      modalHtml += '<div class="dtps-detail-row"><div class="dtps-detail-label">Pipe Size:</div><div class="dtps-detail-value">DN ' + diameter + '</div></div>';
+      modalHtml += '<div class="dtps-detail-row"><div class="dtps-detail-label">Wall Thickness:</div><div class="dtps-detail-value">' + wallThickness.toFixed(2) + ' mm</div></div>';
+      modalHtml += '<div class="dtps-detail-row"><div class="dtps-detail-label">Material:</div><div class="dtps-detail-value">' + (material === 'mild' ? 'Carbon Steel SCH40' : 'Stainless Steel SCH10') + '</div></div>';
+      
+      if (cut.angle !== null && cut.angle !== undefined) {
+        modalHtml += '<div class="dtps-detail-row"><div class="dtps-detail-label">Angle:</div><div class="dtps-detail-value">' + cut.angle + '°</div></div>';
+      }
+      
+      if (cut.holeDiameter) {
+        modalHtml += '<div class="dtps-detail-row"><div class="dtps-detail-label">Hole Diameter:</div><div class="dtps-detail-value">' + cut.holeDiameter + ' mm</div></div>';
+      }
+      
+      if (cut.branchSize) {
+        modalHtml += '<div class="dtps-detail-row"><div class="dtps-detail-label">Branch Size:</div><div class="dtps-detail-value">DN ' + cut.branchSize + '</div></div>';
+      }
+      
+      if (cut.direction) {
+        modalHtml += '<div class="dtps-detail-row"><div class="dtps-detail-label">Direction:</div><div class="dtps-detail-value">' + (cut.direction === 'L' ? 'Left' : 'Right') + '</div></div>';
+      }
+      
+      // Calculate cut time
+      const time = dtpsCalculateCutTime(parseFloat(diameter), wallThickness, cut.cutType, cut.holeDiameter, cut.bevelAngle, cut.branchSize);
+      modalHtml += '<div class="dtps-detail-row"><div class="dtps-detail-label">Cut Time:</div><div class="dtps-detail-value">' + dtpsFormatTime(time) + '</div></div>';
+      
+      modalHtml += '</div></div></div>';
+      
+      // Add to page
+      const modalDiv = document.createElement('div');
+      modalDiv.id = 'dtps-piece-modal';
+      modalDiv.innerHTML = modalHtml;
+      document.body.appendChild(modalDiv);
+    }
+    
+    function dtpsCloseModal(event) {
+      const modal = document.getElementById('dtps-piece-modal');
+      if (modal) {
+        modal.remove();
+      }
+    }
+    
+    function dtpsGetExportStatus(nestId) {
+      if (!nestId) return false;
+      try {
+        const exports = JSON.parse(localStorage.getItem('dtpsExports') || '{}');
+        return exports[nestId] || false;
+      } catch (e) {
+        return false;
+      }
+    }
+    
+    function dtpsMarkAsExported(nestId) {
+      if (!nestId) return;
+      try {
+        const exports = JSON.parse(localStorage.getItem('dtpsExports') || '{}');
+        exports[nestId] = {
+          date: new Date().toISOString(),
+          timestamp: Date.now()
+        };
+        localStorage.setItem('dtpsExports', JSON.stringify(exports));
+        dtpsRenderVisualBar();
+      } catch (e) {
+        console.error('Failed to mark as exported:', e);
+      }
+    }
+    
+    function dtpsRecalculate() {
+      dtpsRenderCuts();
+      dtpsUpdateTotals();
+    }
+    
+    // Auto-population from pieces/nesting
+    function dtpsLoadProjectPieces() {
+      const projectCode = document.getElementById('dtps-load-project').value;
+      const spoolSelect = document.getElementById('dtps-load-spool');
+      
+      if (!projectCode) {
+        spoolSelect.innerHTML = '<option value="">Select spool...</option>';
+        return;
+      }
+      
+      const projectPieces = state.pieces.filter(p => p.projectCode === projectCode);
+      const spoolNos = [...new Set(projectPieces.map(p => p.spoolNo))].sort();
+      
+      spoolSelect.innerHTML = '<option value="">Select spool...</option>';
+      spoolNos.forEach(spool => {
+        const opt = document.createElement('option');
+        opt.value = spool;
+        opt.textContent = spool;
+        spoolSelect.appendChild(opt);
+      });
+    }
+    
+    // Helper function to add branch hole cuts from piece branchConnections data
+    function dtpsAddBranchHoleCuts(piece, basePosition, spoolLabel) {
+      if (!piece.branchConnections || piece.branchConnections.length === 0) return;
+      
+      piece.branchConnections.forEach(branch => {
+        const holeCut = {
+          id: dtpsCutIdCounter++,
+          cutType: 'hole',
+          direction: null,
+          holeDiameter: branch.size || 65,
+          bevelAngle: null,
+          branchSize: null,
+          distance: basePosition + (branch.distance || 0),
+          subDistance: null,
+          angle: branch.angle || 0,
+          spoolLabel: spoolLabel || piece.spoolNo,
+          isBranchHole: true // Flag to identify branch holes
+        };
+        dtpsCuts.push(holeCut);
+      });
+    }
+    
+    function dtpsLoadSpoolData() {
+      const projectCode = document.getElementById('dtps-load-project').value;
+      const spoolNo = document.getElementById('dtps-load-spool').value;
+      
+      if (!projectCode || !spoolNo) {
+        alert('Select both project and spool first.');
+        return;
+      }
+      
+      const spoolPieces = state.pieces.filter(p => 
+        p.projectCode === projectCode && p.spoolNo === spoolNo
+      );
+      
+      if (spoolPieces.length === 0) {
+        alert('No pieces found for this spool.');
+        return;
+      }
+      
+      dtpsCuts = [];
+      dtpsLastPartOffDistance = 0;
+      
+      const mainPiece = spoolPieces.find(p => p.isMainSpool) || spoolPieces[0];
+      
+      document.getElementById('dtps-spool-id').value = spoolNo;
+      
+      const matMap = {
+        'CS_SCH40': 'mild',
+        'CS_MED_FIRE': 'mild',
+        'SS_SCH10': 'stainless',
+        'HDG': 'mild'
+      };
+      const material = matMap[mainPiece.materialFamily] || 'mild';
+      document.getElementById('dtps-material').value = material;
+      dtpsMaterialChange();
+      
+      const sizeMatch = mainPiece.pipeSize.match(/\d+/);
+      if (sizeMatch) {
+        const diameter = parseInt(sizeMatch[0]);
+        document.getElementById('dtps-diameter').value = diameter;
+        dtpsDiameterChange();
+      }
+      
+      const project = state.projects.find(p => p.code === projectCode);
+      if (project) {
+        document.getElementById('dtps-stock-length').value = project.stockLength || 6000;
+      }
+      
+      const sorted = spoolPieces.sort((a, b) => {
+        if (a.isMainSpool && !b.isMainSpool) return -1;
+        if (!a.isMainSpool && b.isMainSpool) return 1;
+        return (a.spoolSubNo || '').localeCompare(b.spoolSubNo || '');
+      });
+      
+      const hasNestingPositions = sorted.every(p => p.Start_Position_mm != null);
+      
+      if (hasNestingPositions) {
+        sorted.forEach(piece => {
+          const cutType = piece.pipeworkType === 'Branch' ? 'branch' :
+                         piece.pipeworkType === 'ThreadedSocket' ? 'hole' : 'straight';
+          
+          const cut = {
+            id: dtpsCutIdCounter++,
+            cutType: cutType,
+            direction: 'R',
+            holeDiameter: cutType === 'hole' ? 65 : null,
+            bevelAngle: null,
+            branchSize: cutType === 'branch' ? (sizeMatch ? parseInt(sizeMatch[0]) : 125) : null,
+            distance: piece.Start_Position_mm || 0,
+            subDistance: null,
+            angle: 0,
+            pieceLength: piece.pieceLength // Store piece length for offcut calculation
+          };
+          
+          dtpsCuts.push(cut);
+          
+          // Add branch hole cuts if this is a main piece with branches
+          if (piece.isMainSpool && piece.branchConnections && piece.branchConnections.length > 0) {
+            dtpsAddBranchHoleCuts(piece, piece.Start_Position_mm || 0, piece.spoolNo);
+          }
+        });
+      } else {
+        let currentPos = 100;
+        
+        sorted.forEach(piece => {
+          const cutType = piece.pipeworkType === 'Branch' ? 'branch' :
+                         piece.pipeworkType === 'ThreadedSocket' ? 'hole' : 'straight';
+          
+          const cut = {
+            id: dtpsCutIdCounter++,
+            cutType: cutType,
+            direction: 'R',
+            holeDiameter: cutType === 'hole' ? 65 : null,
+            bevelAngle: null,
+            branchSize: cutType === 'branch' ? (sizeMatch ? parseInt(sizeMatch[0]) : 125) : null,
+            distance: currentPos,
+            subDistance: null,
+            angle: 0,
+            pieceLength: piece.pieceLength // Store piece length for offcut calculation
+          };
+          
+          dtpsCuts.push(cut);
+          
+          // Add branch hole cuts if this is a main piece with branches
+          if (piece.isMainSpool && piece.branchConnections && piece.branchConnections.length > 0) {
+            dtpsAddBranchHoleCuts(piece, currentPos, piece.spoolNo);
+          }
+          
+          currentPos += piece.pieceLength + 25;
+        });
+      }
+      
+      dtpsRenderCuts();
+      dtpsUpdateTotals();
+      
+      alert('Loaded ' + spoolPieces.length + ' pieces for spool ' + spoolNo);
+    }
+    
+    // Load mode switching
+    function dtpsSetLoadMode(mode) {
+      const spoolBtn = document.getElementById('dtps-mode-spool');
+      const nestBtn = document.getElementById('dtps-mode-nest');
+      const spoolSection = document.getElementById('dtps-load-spool-section');
+      const nestSection = document.getElementById('dtps-load-nest-section');
+      
+      if (mode === 'spool') {
+        spoolBtn.classList.add('active');
+        nestBtn.classList.remove('active');
+        spoolSection.style.display = 'block';
+        nestSection.style.display = 'none';
+      } else {
+        spoolBtn.classList.remove('active');
+        nestBtn.classList.add('active');
+        spoolSection.style.display = 'none';
+        nestSection.style.display = 'block';
+      }
+    }
+    
+    // Load nests for a project
+    function dtpsLoadProjectNests() {
+      const projectCode = document.getElementById('dtps-load-nest-project').value;
+      const nestSelect = document.getElementById('dtps-load-nest-id');
+      
+      if (!projectCode) {
+        nestSelect.innerHTML = '<option value="">Select nest...</option>';
+        return;
+      }
+      
+      // Get unique nests from pieces that have nesting data
+      const projectPieces = state.pieces.filter(p => 
+        p.projectCode === projectCode && p.Nest_Run_ID && p.Pipe_Stock_ID
+      );
+      
+      // Group by Pipe_Stock_ID to get unique nests
+      const nestMap = new Map();
+      projectPieces.forEach(p => {
+        if (!nestMap.has(p.Pipe_Stock_ID)) {
+          nestMap.set(p.Pipe_Stock_ID, {
+            nestId: p.Nest_Run_ID || 'Unknown',
+            stockId: p.Pipe_Stock_ID,
+            material: p.materialFamily,
+            size: p.pipeSize,
+            pieces: []
+          });
+        }
+        nestMap.get(p.Pipe_Stock_ID).pieces.push(p);
+      });
+      
+      if (nestMap.size === 0) {
+        nestSelect.innerHTML = '<option value="">No nests found (run nesting first)</option>';
+        return;
+      }
+      
+      nestSelect.innerHTML = '<option value="">Select nest...</option>';
+      nestMap.forEach((nestInfo, stockId) => {
+        const opt = document.createElement('option');
+        opt.value = stockId;
+        opt.textContent = nestInfo.nestId + ' - ' + nestInfo.size + ' ' + nestInfo.material + ' (' + nestInfo.pieces.length + ' pieces)';
+        nestSelect.appendChild(opt);
+      });
+    }
+    
+    // Load entire nest into DTPS
+    function dtpsLoadNestData() {
+      const projectCode = document.getElementById('dtps-load-nest-project').value;
+      const stockId = document.getElementById('dtps-load-nest-id').value;
+      
+      if (!projectCode || !stockId) {
+        alert('Select both project and nest first.');
+        return;
+      }
+      
+      // Get all pieces for this stock length
+      const nestPieces = state.pieces.filter(p => 
+        p.projectCode === projectCode && p.Pipe_Stock_ID === stockId
+      );
+      
+      if (nestPieces.length === 0) {
+        alert('No pieces found for this nest.');
+        return;
+      }
+      
+      // Clear existing cuts
+      dtpsCuts = [];
+      dtpsLastPartOffDistance = 0;
+      
+      // Get first piece for pipe specs
+      const firstPiece = nestPieces[0];
+      
+      // Set pipe ID to stock ID
+      document.getElementById('dtps-spool-id').value = stockId;
+      
+      // Set material
+      const matMap = {
+        'CS_SCH40': 'mild',
+        'CS_MED_FIRE': 'mild',
+        'SS_SCH10': 'stainless',
+        'HDG': 'mild'
+      };
+      const material = matMap[firstPiece.materialFamily] || 'mild';
+      document.getElementById('dtps-material').value = material;
+      dtpsMaterialChange();
+      
+      // Set diameter
+      const sizeMatch = firstPiece.pipeSize.match(/\\d+/);
+      if (sizeMatch) {
+        const diameter = parseInt(sizeMatch[0]);
+        document.getElementById('dtps-diameter').value = diameter;
+        dtpsDiameterChange();
+      }
+      
+      // Get project stock length
+      const project = state.projects.find(p => p.code === projectCode);
+      if (project) {
+        document.getElementById('dtps-stock-length').value = project.stockLength || 6000;
+      }
+      
+      // Sort pieces by start position
+      const sorted = nestPieces.sort((a, b) => {
+        const aPos = a.Start_Position_mm || 0;
+        const bPos = b.Start_Position_mm || 0;
+        return aPos - bPos;
+      });
+      
+      // Create cuts from ALL pieces in this nest
+      sorted.forEach(piece => {
+        const cutType = piece.pipeworkType === 'Branch' ? 'branch' :
+                       piece.pipeworkType === 'ThreadedSocket' ? 'hole' : 'straight';
+        
+        const cut = {
+          id: dtpsCutIdCounter++,
+          cutType: cutType,
+          direction: 'R',
+          holeDiameter: cutType === 'hole' ? 65 : null,
+          bevelAngle: null,
+          branchSize: cutType === 'branch' ? (sizeMatch ? parseInt(sizeMatch[0]) : 125) : null,
+          distance: piece.Start_Position_mm || 0,
+          subDistance: null,
+          angle: 0,
+          spoolLabel: piece.spoolNo, // Store for display
+          pieceLength: piece.pieceLength // Store piece length for offcut calculation
+        };
+        
+        dtpsCuts.push(cut);
+        
+        // Add branch hole cuts if this is a main piece with branches
+        if (piece.isMainSpool && piece.branchConnections && piece.branchConnections.length > 0) {
+          dtpsAddBranchHoleCuts(piece, piece.Start_Position_mm || 0, piece.spoolNo);
+        }
+      });
+      
+      dtpsRenderCuts();
+      dtpsUpdateTotals();
+      
+      alert('Loaded nest ' + firstPiece.Nest_Run_ID + ' with ' + nestPieces.length + ' pieces from multiple spools');
+    }
+    
+    // Export functions - using string concatenation to avoid template literal issues
+    function dtpsSaveMarkdown() {
+      const diameter = parseFloat(document.getElementById('dtps-diameter').value);
+      const wallThickness = parseFloat(document.getElementById('dtps-wall').value);
+      const pipeId = document.getElementById('dtps-spool-id').value || 'UNKNOWN';
+      const material = document.getElementById('dtps-material').value;
+      
+      const date = new Date();
+      const dateStr = date.getFullYear() + 
+                     String(date.getMonth() + 1).padStart(2, '0') + 
+                     String(date.getDate()).padStart(2, '0');
+      const filename = dateStr + '-' + pipeId + '.md';
+      
+      let markdown = '# Steel Pipe Cut Setup\n\n';
+      markdown += '**Date:** ' + date.toLocaleDateString() + '\n';
+      markdown += '**Pipe ID:** ' + pipeId + '\n\n';
+      markdown += '## Pipe Specifications\n\n';
+      markdown += '- **Pipe Diameter (nominal):** ' + diameter + 'mm\n';
+      markdown += '- **Pipe material:** ' + material + '\n';
+      markdown += '- **Wall Thickness:** ' + wallThickness + 'mm\n\n';
+      markdown += '*Cuts are estimated at 100A power*\n\n';
+      markdown += '## Cuts\n\n';
+      
+      dtpsCuts.forEach((cut, index) => {
+        const speed = dtpsCalculateSpeed(wallThickness, cut.cutType, cut.bevelAngle);
+        const time = dtpsCalculateCutTime(diameter, wallThickness, cut.cutType, cut.holeDiameter, cut.bevelAngle, cut.branchSize);
+        const timePrefix = cut.cutType === 'branch' ? '~' : '';
+        
+        markdown += '### Cut ' + (index + 1) + ': ' + dtpsGetCutTypeName(cut.cutType) + '\n\n';
+        markdown += '- **Travel Speed:** ' + speed.toFixed(2) + ' m/min\n';
+        
+        if (cut.cutType === 'bevel') {
+          markdown += '- **Bevel Angle:** ' + cut.bevelAngle + '°\n';
+          markdown += '- **Bevel Direction:** ' + cut.direction + '\n';
+        } else if (cut.cutType === 'hole') {
+          markdown += '- **Hole Diameter:** ' + cut.holeDiameter + 'mm\n';
+        } else if (cut.cutType === 'branch') {
+          markdown += '- **Branch Size:** ' + cut.branchSize + 'mm\n';
+          markdown += '- **Branch Direction:** ' + cut.direction + '\n';
+        }
+        
+        markdown += '- **Distance:** ' + cut.distance + 'mm\n';
+        
+        if (cut.cutType === 'hole' || cut.cutType === 'branch') {
+          markdown += '- **Angle:** ' + cut.angle + '°\n';
+        }
+        
+        markdown += '- **Cut Time:** ' + timePrefix + dtpsFormatTime(time) + '\n\n';
+      });
+      
+      const totalSeconds = dtpsCuts.reduce((sum, cut) => {
+        if (cut.cutType === 'partoff') return sum + 2;
+        return sum + dtpsCalculateCutTime(diameter, wallThickness, cut.cutType, cut.holeDiameter, cut.bevelAngle, cut.branchSize);
+      }, 0);
+      const totalWithMovement = totalSeconds * 1.15;
+      
+      markdown += '## Total Times\n\n';
+      markdown += '- **Total Cut Time:** ' + dtpsFormatTime(totalSeconds) + '\n';
+      markdown += '- **Total Processing (incl. 15% robot movement):** ' + dtpsFormatTime(totalWithMovement) + '\n\n';
+      markdown += '---\n\n';
+      markdown += '*Cut times are estimated and are only indicative of rough processing time.*\n';
+      
+      const blob = new Blob([markdown], { type: 'text/markdown' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      dtpsMarkAsExported(pipeId);
+    }
+    
+    function dtpsSaveCSR() {
+      const diameter = parseFloat(document.getElementById('dtps-diameter').value);
+      const pipeLength = parseFloat(document.getElementById('dtps-stock-length').value);
+      const pipeId = document.getElementById('dtps-spool-id').value || 'UNKNOWN';
+      const material = document.getElementById('dtps-material').value;
+      const materialAbbr = material === 'mild' ? 'MS' : 'SS';
+      
+      const now = new Date();
+      const dateStr = now.getFullYear() + 
+                  String(now.getMonth() + 1).padStart(2, '0') + 
+                  String(now.getDate()).padStart(2, '0');
+      const filename = 'MST ' + diameter + ' ' + materialAbbr + ' ' + pipeId + '.csr';
+      
+      const year = now.getFullYear();
+      const month = now.getMonth() + 1;
+      const day = now.getDate();
+      const hour = now.getHours();
+      const minute = now.getMinutes();
+      const second = now.getSeconds();
+      
+      let csr = '[Description]\n';
+      csr += 'Comment,  ' + dateStr + '\n';
+      csr += 'SubComment1, \n';
+      csr += 'SubComment2, \n';
+      csr += 'Mechanism, 0(0000)\n';
+      csr += 'Tool, 1:TOOL01 PLASMA\n';
+      csr += 'Creator, PipeNestingPlanner\n';
+      csr += 'User coordinate, None\n';
+      csr += 'Create, ' + year + ', ' + month + ', ' + day + ', ' + hour + ', ' + minute + ', ' + second + '\n';
+      csr += 'Update, ' + year + ', ' + month + ', ' + day + ', ' + hour + ', ' + minute + ', ' + second + '\n';
+      csr += 'Original, \n';
+      csr += 'Edit, 0\n\n';
+      csr += '[Variable]\n';
+      csr += 'LB, LB001, , 0\n';
+      csr += 'LB, LB002, , 0\n';
+      csr += 'LB, LB003, , 0\n';
+      csr += 'LB, LB004, , 0\n';
+      csr += 'LB, LB005, , 0\n';
+      csr += 'LI, LI001, , 0\n';
+      csr += 'LI, LI002, , 0\n';
+      csr += 'LI, LI003, , 0\n';
+      csr += 'LI, LI004, , 0\n';
+      csr += 'LI, LI005, , 0\n';
+      csr += 'LL, LL001, , 0\n';
+      csr += 'LL, LL002, , 0\n';
+      csr += 'LL, LL003, , 0\n';
+      csr += 'LL, LL004, , 0\n';
+      csr += 'LL, LL005, , 0\n';
+      csr += 'LR, LR001, , 0.000000000000000\n';
+      csr += 'LR, LR002, , 0.000000000000000\n';
+      csr += 'LR, LR003, , 0.000000000000000\n';
+      csr += 'LR, LR004, , 0.000000000000000\n';
+      csr += 'LR, LR005, , 0.000000000000000\n\n';
+      csr += '[Command]\n';
+      csr += 'REM, ===\n';
+      csr += 'REM, ' + pipeId + ' by PipeNestingPlanner\n';
+      csr += 'REM, ' + diameter + ' ' + materialAbbr + '\n';
+      csr += 'REM, ===\n';
+      csr += 'SET, GI#(1:Pipe Length), ' + pipeLength + '\n';
+      csr += 'CALL, SEARCH ' + diameter + ' end.rp4\n';
+      
+      dtpsCuts.forEach(cut => {
+        if (cut.cutType === 'partoff') {
+          csr += 'REM, ===\n';
+          csr += 'REM, PART OFF\n';
+          csr += 'REM, ===\n';
+          return;
+        }
+        
+        csr += 'SET, GI#(2:Cut Distance), ' + cut.distance + '\n';
+        if (cut.cutType === 'hole' || cut.cutType === 'branch') {
+          csr += 'SET, GI#(3:Cut Angle), ' + cut.angle + '\n';
+        }
+        
+        let callCmd = 'CALL, CUT ' + diameter + 'mm ' + materialAbbr + ' ';
+        if (cut.cutType === 'straight') {
+          callCmd += 'STRAIGHT.rp4';
+        } else if (cut.cutType === 'bevel') {
+          callCmd += 'BEVEL ' + cut.bevelAngle + ' ' + cut.direction + '.rp4';
+        } else if (cut.cutType === 'hole') {
+          callCmd += 'HOLE ' + cut.holeDiameter + 'mm.rp4';
+        } else if (cut.cutType === 'branch') {
+          callCmd += 'BRANCH ' + cut.branchSize + 'mm ' + cut.direction + '.rp4';
+        }
+        
+        csr += callCmd + '\n';
+      });
+      csr += 'CALL, LIB HOME ROB G4 G5.rp4\n';
+      
+      const blob = new Blob([csr], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      dtpsMarkAsExported(pipeId);
+    }
+    
+    function dtpsInitialize() {
+      dtpsPopulatePipeDiameters();
+      dtpsUpdateHoleSizeOptions();
+      dtpsUpdateBranchSizeOptions();
+      dtpsToggleCutFields();
+      
+      // Populate both project selectors (spool and nest modes)
+      const projectSelect = document.getElementById('dtps-load-project');
+      const nestProjectSelect = document.getElementById('dtps-load-nest-project');
+      
+      const projectOptions = '<option value="">Select project...</option>' + 
+        state.projects.map(p => '<option value="' + p.code + '">' + p.code + ' – ' + p.name + '</option>').join('');
+      
+      projectSelect.innerHTML = projectOptions;
+      nestProjectSelect.innerHTML = projectOptions;
+    }
+    
+    </script>
+</body>
+</html>
